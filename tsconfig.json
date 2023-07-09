@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "allowJs": true,
+    "noEmit": true,
+     "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "removeComments": true
+  },
+  "include": [
+    "Src"
+  ],
+  "exclude": [
+    "node_modules",
+    "agent",
+    "examples",
+    "test",
+    "hook.js",
+    "dist",
+    "*.d.ts"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "frida-http",
+  "version": "3.0.0",
+  "description": "Node.js compatible “http” module for Frida",
+  "keywords": [
+    "frida"
+  ],
+  "homepage": "https://www.frida.re",
+  "main": "index.js",
+  "files": [
+    "/index.js",
+    "/lib/**/*.js"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frida/frida-http.git"
+  },
+  "bugs": {
+    "url": "https://github.com/frida/frida-http/issues"
+  },
+  "dependencies": {
+    "http-parser-js": "^0.5.1"
+  }
+}

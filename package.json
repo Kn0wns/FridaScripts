@@ -1,0 +1,19 @@
+{
+  "name": "fridascript",
+  "version": "1.0.0",
+  "description": "frida模块化",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "npm run build",
+    "build": "frida-compile Src/index.ts -o hook.js -c",
+    "watch": "frida-compile Src/index.ts -o hook.js -w"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/frida-gum": "^18.3.1",
+    "@types/node": "^14.14.2",
+    "frida-compile": "^10.0.0"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "frida-net",
+  "version": "3.0.1",
+  "authors": [
+    "Frida Developers"
+  ],
+  "description": "Node.js compatible “net” module for Frida",
+  "keywords": [
+    "frida"
+  ],
+  "homepage": "https://www.frida.re",
+  "main": "index.js",
+  "files": [
+    "/index.js",
+    "/lib/adapter.js"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frida/frida-net.git"
+  },
+  "bugs": {
+    "url": "https://github.com/frida/frida-net/issues"
+  },
+  "dependencies": {
+    "ipaddr.js": "^1.9.1"
+  }
+}
