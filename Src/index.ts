@@ -23,7 +23,8 @@ function android() {
 
 
 function ios() {
-    FSLog.ios()
-    const {IOS} = exports_IOS
+    // FSLog.ios()
+    const {IOS, CCCrypto} = exports_IOS
     IOS.dump_ui()
+    CCCrypto()  // 自吐
 }
