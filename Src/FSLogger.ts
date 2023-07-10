@@ -65,9 +65,9 @@ export class FSLog {
         }
     }
 
-    static i(tag: string, content: any) {
-        this.log(console.log, 'INFO', tag, content);
-    }
+    // static i(tag: string, content: any) {
+    //     this.log(console.log, 'INFO', tag, content);
+    // }
 
     static w(tag: string, content: any) {
         this.log(console.warn, 'WARN', tag, content);
