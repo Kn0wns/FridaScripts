@@ -24,7 +24,19 @@ function android() {
 
 function ios() {
     // FSLog.ios()
-    const {IOS, CCCrypto} = exports_IOS
-    IOS.dump_ui()
-    CCCrypto()  // 自吐
+    const {IOS, Crypto} = exports_IOS
+
+    // -------------------------------------------------------------------
+    // IOS.dump_ui()  // 查看界面UI
+
+    // -------------------------------------------------------------------
+    // 定位加密建议先用 frida-trace 来定位
+    // frida-trace -UFI "libcommonCrypto*"
+    // frida-trace -UFi CCCrypt
+    // frida-trace -UFi "CC_MD5" -i "CC_SHA1"
+    Crypto.All()  // hook 所有的加密方法
+    // Crypto.base64()
+    // Crypto.MD5()
+    // Crypto.SHA1()
+    // Crypto.CCCrypto()  // AES.DES.3DES.CAST.RC4.RC2.Blowfish
 }
