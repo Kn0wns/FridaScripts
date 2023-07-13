@@ -40,4 +40,7 @@ function ios() {
     // Crypto.MD5()
     // Crypto.SHA1()
     // Crypto.CCCrypto()  // AES.DES.3DES.CAST.RC4.RC2.Blowfish
+
+    // 快速定位
+    // frida-trace -UFm "*[UIAlertView *]"  通过弹窗+堆栈打印定位
 }
