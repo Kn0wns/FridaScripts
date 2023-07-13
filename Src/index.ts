@@ -34,6 +34,7 @@ function ios() {
     // frida-trace -UFI "libcommonCrypto*"
     // frida-trace -UFi CCCrypt
     // frida-trace -UFi "CC_MD5" -i "CC_SHA1"
+    // frida-trace -UFi SecKeyEncrypt -i SecKeyDecrypt  // RSA 加解密
     Crypto.All()  // hook 所有的加密方法
     // Crypto.base64()
     // Crypto.MD5()
