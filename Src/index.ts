@@ -24,7 +24,7 @@ function android() {
 
 function ios() {
     // FSLog.ios()
-    const {IOS, Crypto, Network} = exports_IOS
+    const {IOS, Crypto, Network, Jailbreak} = exports_IOS
 
     // -------------------------------------------------------------------
     // IOS.dump_ui()  // 查看界面UI
@@ -35,7 +35,7 @@ function ios() {
     // frida-trace -UFi CCCrypt
     // frida-trace -UFi "CC_MD5" -i "CC_SHA1"
     // frida-trace -UFi SecKeyEncrypt -i SecKeyDecrypt  // RSA 加解密
-    Crypto.All()  // hook 所有的加密方法
+    // Crypto.All()  // hook 所有的加密方法
     // Crypto.base64()
     // Crypto.MD5()
     // Crypto.SHA1()
@@ -44,5 +44,6 @@ function ios() {
     // 快速定位
     // frida-trace -UFm "*[UIAlertView *]"  通过弹窗+堆栈打印定位
 
-    Network.bypass_VPN()  // 绕过 VPN 检测
+    // Network.bypass_VPN()  // 绕过 VPN 检测
+    Jailbreak.try_bypass()  // 尝试绕过越狱检测
 }
