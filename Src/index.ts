@@ -24,7 +24,7 @@ function android() {
 
 function ios() {
     // FSLog.ios()
-    const {IOS, Crypto} = exports_IOS
+    const {IOS, Crypto, Network} = exports_IOS
 
     // -------------------------------------------------------------------
     // IOS.dump_ui()  // 查看界面UI
@@ -43,4 +43,6 @@ function ios() {
 
     // 快速定位
     // frida-trace -UFm "*[UIAlertView *]"  通过弹窗+堆栈打印定位
+
+    Network.bypass_VPN()  // 绕过 VPN 检测
 }
