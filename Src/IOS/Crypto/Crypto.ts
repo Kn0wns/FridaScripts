@@ -105,26 +105,7 @@ export namespace Crypto {
                     this.outCountPtr = args[10]           /* 输出缓冲区实际写入大小 */
 
                     let Algorithm = ["AES", "DES", "3DES", "CAST", "RC4", "RC2", "Blowfish"];
-
-                    // TODO: CCOptions 不好判断，暂时不打印
-                    // CCOptions options = kCCOptionPKCS7Padding | kCCOptionECBMode;  // ECB模式
-                    // enum {
-                    //     /* options for block ciphers */
-                    //     kCCOptionPKCS7Padding   = 0x0001,
-                    //     kCCOptionECBMode        = 0x0002
-                    //     /* stream ciphers currently have no options */
-                    // };
-                    // typedef uint32_t CCOptions;
-                    // enum {
-                    //     kCCModeECB = 1,
-                    //     kCCModeCBC = 2,
-                    //     kCCModeCFB = 3,
-                    //     kCCModeCTR = 4,
-                    //     kCCModeOFB = 7,
-                    //     kCCModeRC4 = 9,
-                    //     kCCModeCFB8 = 10,
-                    // };
-
+                    let Options = ['ECB', 'CBC', 'CFB'] // 用于表示加密和解密操作选项的位掩码（bitmask） CBC 模式下使用 PKCS7 填充(kCCOptionPKCS7Padding | kCCOptionCBCMode)
                     let Key = Array.from(new Uint8Array(this.keyBytes.readByteArray(this.keyLength.toInt32()) || new ArrayBuffer(0)))
                         .map(byte => ('00' + byte.toString(16)).slice(-2)).join('')
                     let IV = Array.from(new Uint8Array(this.ivBuffer.readByteArray(this.keyLength.toInt32()) || new ArrayBuffer(0)))
@@ -143,7 +124,7 @@ export namespace Crypto {
                         'outBuffer: ' + this.outBuffer + ', ' +
                         'outLength: ' + this.outLength + ', ' +
                         'outCountPtr: ' + this.outCountPtr + ')')
-                    FSLog.d(tag, `当前处于 ${Algorithm[this.CCAlgorithm.toInt32()]} ${this.CCOptions.toInt32()} ${this.operation.toInt32() ? "加密" : "解密"}`)
+                    FSLog.d(tag, `当前处于 ${Algorithm[this.CCAlgorithm.toInt32()]} ${Options[this.CCOptions.toInt32()]} ${this.operation.toInt32() ? "加密" : "解密"}`)
                     FSLog.d(tag, `Key: ${Key}`)
                     FSLog.d(tag, hexdump(this.keyBytes, {
                         length: this.keyLength.toInt32(),
