@@ -45,5 +45,6 @@ function ios() {
     // frida-trace -UFm "*[UIAlertView *]"  通过弹窗+堆栈打印定位
 
     // Network.bypass_VPN()  // 绕过 VPN 检测
-    Jailbreak.try_bypass()  // 尝试绕过越狱检测
+    // Jailbreak.try_bypass()  // 尝试绕过越狱检测
+    Jailbreak.bypassAll()  // 绕过所有越狱检测
 }
