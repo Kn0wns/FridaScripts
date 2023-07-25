@@ -1,6 +1,7 @@
 import {FSLog} from "../../FSLogger";
 
 export namespace Jailbreak {
+    const NO = ptr(0);
     const canOpenURL = ["cydia", "activator", "filza", "sileo", "undecimus", "zbra"]
     const tpLibs = ["Substrate", "cycript", "frida", "SSLKillSwitch2", "SSLKillSwitch", "SubstrateLoader"]
 
@@ -15,7 +16,7 @@ export namespace Jailbreak {
                 Interceptor.attach(funcAddr || NULL, {
                     onLeave: function (retval) {
                         if (retval.toInt32() === 1) {
-                            retval.replace(ptr(0));
+                            retval.replace(NO);
                             FSLog.d(tag, 'jailbreak: ' + funcName + ' retval=' + retval);
                         }
                     }
@@ -29,18 +30,83 @@ export namespace Jailbreak {
         hook_writeToFile();
         hook_canOpenURL();
         hook_fork();
-        hook_fopen();
-        hook_lstat();
-        hook_getenv();
         hook_stat();
         hook_stat64();
+        hook_fopen();
+        hook_open();
+        hook_lstat();
+        hook_access();
+        hook_statfs()
+
+        hook_getenv();
         hook_NSClassFromString();
         hook_dyld_get_image_name();
         hook_ptrace();
         hook_sysctl();
         hook_strstr();
 
+        hook_AppInfo();
+        hook_FileAndFolderPathDetection();
+
         // hook_getpid(); //慎用‼感觉这个也没啥用
+    }
+
+    /**
+     * hook FileAndFolderPathDetection 类下方法 路径文件判断
+     * [detection checkPathByNSFileManager:path]：使用 NSFileManager 对象对路径进行检查，可能涉及文件是否存在、权限等方面的检查。
+     * [detection checkPathByAccess:path]：使用 access 函数对路径进行访问检查，判断是否具有读写权限。
+     * [detection checkPathByStat:path]：使用 stat 函数对路径进行信息查询，例如获取文件的大小、修改时间等。
+     * [detection checkPathByLstat:path]：使用 lstat 函数对路径进行信息查询，类似于 stat，但会解析符号链接指向的真实文件信息。
+     * [detection checkPathByStatfs:path]：使用 statfs 函数对文件系统进行查询，判断路径所在的文件系统类型和属性。
+     * [detection checkPathByOpen:path]：使用 open 函数尝试打开路径对应的文件。
+     * [detection checkPathByFopen:path]：使用 fopen 函数尝试打开路径对应的文件。
+     */
+    function hook_FileAndFolderPathDetection() {
+        let tag = hook_FileAndFolderPathDetection.name
+        const className = 'FileAndFolderPathDetection';
+        const classObj = ObjC.classes[className];
+        // const methodList = classObj.$methods;
+        const methodList = classObj.$ownMethods;  // 只获取当前类的方法
+
+        methodList.forEach(methodName => {
+            const hook = ObjC.classes[className][methodName].implementation;
+            Interceptor.attach(hook, {
+                onEnter: function (args) {
+                    this.path = new ObjC.Object(args[2]).toString();
+                },
+                onLeave: function (retval) {
+                    if (jailbreakPaths.includes(this.path)) {
+                        FSLog.d(tag, `${className}.${methodName}: ${this.path} retval: ${retval} -> 0`);
+                        if (retval.toInt32() > 0) {
+                            retval.replace(NO);
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    /**
+     * hook AppInfo 类下方法 获取已安装应用列表替换为空
+     */
+    function hook_AppInfo() {
+        let tag = hook_AppInfo.name
+        let AppInfo = ObjC.classes.AppInfo;
+
+        let fetchApps = AppInfo['- fetchApps'].implementation;
+        let listInstalledApps = AppInfo['- listInstalledApps'].implementation;
+        hook(fetchApps, 'fetchApps');
+        hook(listInstalledApps, 'listInstalledApps');
+
+        function hook(address: NativePointer, fetchApps1: string) {
+            Interceptor.attach(address, {
+                onLeave: function (retval) {
+                    FSLog.d(tag, `hook: AppInfo.${fetchApps1} retval= `);
+                    // FSLog.d(tag, `hook: AppInfo.${fetchApps1} retval= ${new ObjC.Object(retval)}`);
+                    retval.replace(ObjC.classes.NSArray['new']())
+                }
+            });
+        }
     }
 
 
@@ -55,8 +121,10 @@ export namespace Jailbreak {
             },
             onLeave: function (retval) {
                 if (jailbreakPaths.includes(this.path)) {
-                    FSLog.d(tag, `fileExistsAtPath: ${this.path} retval: ${retval.toInt32()} -> 0`);
-                    retval.replace(ptr(0x0));
+                    FSLog.d(tag, `fileExistsAtPath: ${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             },
         });
@@ -68,8 +136,10 @@ export namespace Jailbreak {
             },
             onLeave: function (retval) {
                 if (jailbreakPaths.includes(this.path)) {
-                    FSLog.d(tag, `fileExistsAtPath:isDirectory: ${this.path} retval: ${retval.toInt32()} -> 0`);
-                    retval.replace(ptr(0x0));
+                    FSLog.d(tag, `fileExistsAtPath:isDirectory: ${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             },
         });
@@ -86,8 +156,10 @@ export namespace Jailbreak {
             },
             onLeave(retval) {
                 if (canOpenURL.includes(this.path)) {
-                    FSLog.d(tag, `canOpenURL: ${this.path} retval: ${retval.toInt32()} -> 0`);
-                    retval.replace(ptr(0x0));
+                    FSLog.d(tag, `canOpenURL: ${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         });
@@ -100,8 +172,10 @@ export namespace Jailbreak {
             },
             onLeave(retval) {
                 if (canOpenURL.includes(this.path)) {
-                    FSLog.d(tag, `canOpenURL2: ${this.path} retval: ${retval.toInt32()} -> 0`);
-                    retval.replace(ptr(0x0));
+                    FSLog.d(tag, `canOpenURL2: ${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         });
@@ -118,8 +192,10 @@ export namespace Jailbreak {
             },
             onLeave(retval) {
                 if (canOpenURL.includes(this.path)) {
-                    FSLog.d(tag, `openURL: ${this.path} retval: ${retval.toInt32()} -> 0`);
-                    retval.replace(ptr(0x0));
+                    FSLog.d(tag, `openURL: ${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         });
@@ -138,7 +214,7 @@ export namespace Jailbreak {
             },
             onLeave: function (retval) {
                 if (this.path.includes("private")) {
-                    FSLog.d(tag, `writeToFile: ${this.path} retval: ${retval.toInt32()} -> 0`);
+                    FSLog.d(tag, `writeToFile: ${this.path} retval: ${retval} -> 0x0`);
                     // @ts-ignore
                     Memory.writePointer(this.error, ObjC.classes.NSError.alloc());
                 }
@@ -184,8 +260,10 @@ export namespace Jailbreak {
             },
             onLeave: function (retval) {
                 if (jailbreakPaths.includes(this.path)) {
-                    FSLog.d(tag, `${this.path} retval: ${retval.toInt32()} -> 1`);
-                    retval.replace(ptr(-1));
+                    FSLog.d(tag, `${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         });
@@ -199,11 +277,12 @@ export namespace Jailbreak {
         let fork = Module.findExportByName(null, 'fork') || NULL;
         Interceptor.attach(fork, {
             onLeave: function (retval) {
-                FSLog.d(tag, `fork: ` + retval);
-                retval.replace(ptr(-1));
+                FSLog.d(tag, `fork: ${retval} -> 0x0`);
+                if (retval.toInt32() > 0) {
+                    retval.replace(NO);
+                }
             }
         })
-
     }
 
 
@@ -221,8 +300,10 @@ export namespace Jailbreak {
             },
             onLeave: function (retval) {
                 if (jailbreakPaths.includes(this.path)) {
-                    FSLog.d(tag, `${this.path} retval: ${retval.toInt32()} -> -1`);
-                    retval.replace(ptr(-1));
+                    FSLog.d(tag, `${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         });
@@ -242,8 +323,10 @@ export namespace Jailbreak {
             },
             onLeave: function (retval) {
                 if (jailbreakPaths.includes(this.path)) {
-                    FSLog.d(tag, `${this.path} retval: ${retval.toInt32()} -> -1`);
-                    retval.replace(ptr(-1));
+                    FSLog.d(tag, `${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         });
@@ -262,12 +345,78 @@ export namespace Jailbreak {
             },
             onLeave(retval) {
                 if (jailbreakPaths.includes(this.path)) {
-                    FSLog.d(tag, `${this.path} retval: ${retval.toInt32()} -> 0`);
-                    retval.replace(new NativePointer(0));
+                    FSLog.d(tag, `${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         })
     }
+
+    /**
+     * hook fopen 方法 打开文件
+     */
+    function hook_open() {
+        let tag = hook_open.name
+        let open = Module.findExportByName(null, 'open') || NULL;
+        Interceptor.attach(open, {
+            onEnter: function (args) {
+                this.path = args[0].readCString();
+            },
+            onLeave(retval) {
+                if (jailbreakPaths.includes(this.path)) {
+                    FSLog.d(tag, `${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
+                }
+            }
+        })
+    }
+
+    /**
+     * hook access 方法
+     */
+    function hook_access() {
+        let tag = hook_access.name
+        let access = Module.findExportByName(null, 'access') || NULL;
+        Interceptor.attach(access, {
+            onEnter: function (args) {
+                this.path = args[0].readCString();
+            },
+            onLeave(retval) {
+                if (jailbreakPaths.includes(this.path)) {
+                    FSLog.d(tag, `${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
+                }
+            }
+        })
+    }
+
+    /**
+     * hook statfs 方法
+     */
+    function hook_statfs() {
+        let tag = hook_statfs.name
+        let statfs = Module.findExportByName(null, 'statfs') || NULL;
+        Interceptor.attach(statfs, {
+            onEnter: function (args) {
+                this.path = args[0].readCString();
+            },
+            onLeave(retval) {
+                if (jailbreakPaths.includes(this.path)) {
+                    FSLog.d(tag, `${this.path} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
+                }
+            }
+        })
+    }
+
 
     /**
      * hook getenv 方法 获取环境变量
@@ -282,8 +431,10 @@ export namespace Jailbreak {
             },
             onLeave: function (retval) {
                 if (this.env == "DYLD_INSERT_LIBRARIES") {
-                    retval.replace(ptr(0))
-                    FSLog.d(tag, `getenv: ${this.env} retval: ${retval.toInt32()} -> 0`);
+                    FSLog.d(tag, `getenv: ${this.env} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         })
@@ -352,8 +503,10 @@ export namespace Jailbreak {
             },
             onLeave: function (retval) {
                 if (tpLibs.includes(this.lib)) {
-                    FSLog.d(tag, `strstr: ${this.lib} retval: ${retval.toInt32()} -> 0`);
-                    retval.replace(ptr(0));
+                    FSLog.d(tag, `strstr: ${this.lib} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         });
@@ -373,8 +526,10 @@ export namespace Jailbreak {
             },
             onLeave: function (retval) {
                 if (target_class.includes(this.clz)) {
-                    retval.replace(ptr(0))
-                    FSLog.d(tag, `NSClassFromString: ` + this.clz);
+                    FSLog.d(tag, `NSClassFromString: ${this.clz} retval: ${retval} -> 0x0`);
+                    if (retval.toInt32() > 0) {
+                        retval.replace(NO);
+                    }
                 }
             }
         })
@@ -451,8 +606,11 @@ export namespace Jailbreak {
         "/Applications/MessagesViewService.app",
         "/Applications/MobilePhone.app",
         "/Applications/MobileSMS.app",
+        '/Applications/Flex.app',
+        '/Applications/DumpDecrypter.app',
         "/Applications/MobileSafari.app",
         "/Applications/MobileSlideShow.app",
+        '/Applications/SubstituteSettings.app',
         "/Applications/MobileTimer.app",
         "/Applications/MusicUIService.app",
         "/Applications/Passbook.app",
@@ -1011,6 +1169,7 @@ export namespace Jailbreak {
         "/Applications/Snoop-itConfig.app",
         "/Applications/WinterBoard.app",
         "/Applications/blackra1n.app",
+        '/private/var/binpack/Applications/loader.app',
         "/Library/MobileSubstrate/CydiaSubstrate.dylib",
         "/Library/MobileSubstrate/DynamicLibraries/LiveClock.plist",
         "/Library/MobileSubstrate/DynamicLibraries/Veency.plist",
