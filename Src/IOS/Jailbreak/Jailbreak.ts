@@ -1,4 +1,4 @@
-import {FSLog} from "../../FSLogger";
+import { FSLog } from "../../FSLogger";
 
 export namespace Jailbreak {
     const NO = ptr(0);
@@ -48,6 +48,36 @@ export namespace Jailbreak {
         hook_AppInfo();
         hook_FileAndFolderPathDetection();
 
+        'use strict';
+
+        // Hook FileManager.default.destinationOfSymbolicLink(atPath:) method
+        var sel = ObjC.selector("destinationOfSymbolicLinkAtURL:error:")
+        // Interceptor.attach(Module.findExportByName("Foundation", "destinationOfSymbolicLinkAtURL:error:")||NULL, {
+        Interceptor.attach(sel, {
+            onEnter: function (args) {
+                // Get the path argument
+                var path = new ObjC.Object(args[2]).toString();
+
+                // Check if the path matches any of the paths to be checked
+                var pathsToCheck = [
+                    "/var/lib/undecimus/apt",
+                    "/Applications",
+                    "/Library/Ringtones",
+                    "/Library/Wallpaper",
+                    "/usr/arm-apple-darwin9",
+                    "/usr/include",
+                    "/usr/libexec",
+                    "/usr/share"
+                ];
+
+                if (pathsToCheck.indexOf(path) >= 0) {
+                    // Return a fake result to bypass the original check
+                    args[3] = ObjC.classes.NSString.stringWithString_("fake_destination");
+                }
+            }
+        });
+
+
         // hook_getpid(); //慎用‼感觉这个也没啥用
     }
 
@@ -65,25 +95,25 @@ export namespace Jailbreak {
         let tag = hook_FileAndFolderPathDetection.name
         const className = 'FileAndFolderPathDetection';
         const classObj = ObjC.classes[className];
-        // const methodList = classObj.$methods;
-        const methodList = classObj.$ownMethods;  // 只获取当前类的方法
-
-        methodList.forEach(methodName => {
-            const hook = ObjC.classes[className][methodName].implementation;
-            Interceptor.attach(hook, {
-                onEnter: function (args) {
-                    this.path = new ObjC.Object(args[2]).toString();
-                },
-                onLeave: function (retval) {
-                    if (jailbreakPaths.includes(this.path)) {
-                        FSLog.d(tag, `${className}.${methodName}: ${this.path} retval: ${retval} -> 0`);
-                        if (retval.toInt32() > 0) {
-                            retval.replace(NO);
+        if (classObj) {
+            const methodList = classObj.$ownMethods;  // 只获取当前类的方法
+            methodList.forEach(methodName => {
+                const hook = ObjC.classes[className][methodName].implementation;
+                Interceptor.attach(hook, {
+                    onEnter: function (args) {
+                        this.path = new ObjC.Object(args[2]).toString();
+                    },
+                    onLeave: function (retval) {
+                        if (jailbreakPaths.includes(this.path)) {
+                            FSLog.d(tag, `${className}.${methodName}: ${this.path} retval: ${retval} -> 0`);
+                            if (retval.toInt32() > 0) {
+                                retval.replace(NO);
+                            }
                         }
                     }
-                }
+                });
             });
-        });
+        }
     }
 
     /**
@@ -93,10 +123,12 @@ export namespace Jailbreak {
         let tag = hook_AppInfo.name
         let AppInfo = ObjC.classes.AppInfo;
 
-        let fetchApps = AppInfo['- fetchApps'].implementation;
-        let listInstalledApps = AppInfo['- listInstalledApps'].implementation;
-        hook(fetchApps, 'fetchApps');
-        hook(listInstalledApps, 'listInstalledApps');
+        if (AppInfo) {
+            let fetchApps = AppInfo['- fetchApps'].implementation;
+            let listInstalledApps = AppInfo['- listInstalledApps'].implementation;
+            hook(fetchApps, 'fetchApps');
+            hook(listInstalledApps, 'listInstalledApps');
+        }
 
         function hook(address: NativePointer, fetchApps1: string) {
             Interceptor.attach(address, {
@@ -205,6 +237,7 @@ export namespace Jailbreak {
      * hook writeToFile 方法 检测是否可以写入文件
      */
     function hook_writeToFile() {
+        let keyword = ['root', 'jb', '/', 'private']
         let tag = hook_writeToFile.name
         let hook = ObjC.classes.NSString["- writeToFile:atomically:encoding:error:"];
         Interceptor.attach(hook.implementation, {
@@ -213,11 +246,13 @@ export namespace Jailbreak {
                 this.path = new ObjC.Object(args[2]).toString();
             },
             onLeave: function (retval) {
-                if (this.path.includes("private")) {
-                    FSLog.d(tag, `writeToFile: ${this.path} retval: ${retval} -> 0x0`);
-                    // @ts-ignore
-                    Memory.writePointer(this.error, ObjC.classes.NSError.alloc());
-                }
+                keyword.forEach(v => {
+                    if (this.path.includes(v)) {
+                        FSLog.d(tag, `writeToFile: ${this.path} retval: ${retval} -> 0x0`);
+                        // @ts-ignore
+                        Memory.writePointer(this.error, ObjC.classes.NSError.alloc());
+                    }
+                });
             }
         });
     }
@@ -279,7 +314,7 @@ export namespace Jailbreak {
             onLeave: function (retval) {
                 FSLog.d(tag, `fork: ${retval} -> 0x0`);
                 if (retval.toInt32() > 0) {
-                    retval.replace(NO);
+                    // retval.replace(NO);
                 }
             }
         })
@@ -1383,6 +1418,20 @@ export namespace Jailbreak {
         "/Library/LaunchDaemons/com.tigisoftware.filza.helper.plist",
         "/Library/LaunchDaemons/dhpdaemon.plist",
         "/Library/LaunchDaemons/re.frida.server.plist",
-        "/Library/MobileSubstrate/DynamicLibraries/Choicy.plist"
+        "/Library/MobileSubstrate/DynamicLibraries/Choicy.plist",
+        '/var/mobile/Library/Preferences/ABPattern',
+        '/usr/lib/ABDYLD.dylib',
+        '/usr/lib/ABSubLoader.dylib',
+        '/Library/PreferenceBundles/Cephei.bundle',
+        '/Library/PreferenceBundles/SubstitutePrefs.bundle',
+        '/Library/PreferenceBundles/libhbangprefs.bundle',
+        '/var/binpack/Applications/loader.app',
+        '/Applications/FlyJB.app',
+        '/Applications/Zebra.app',
+        '/Library/BawAppie/ABypass',
+        '/Library/MobileSubstrate/DynamicLibraries/SSLKillSwitch2.plist',
+        '/Library/MobileSubstrate/DynamicLibraries/PreferenceLoader.plist',
+        '/Library/MobileSubstrate/DynamicLibraries',
+        '/var/mobile/Library/Preferences/me.jjolano.shadow.plist',
     ]
 }
