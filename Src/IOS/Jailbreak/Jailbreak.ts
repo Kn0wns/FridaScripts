@@ -1,4 +1,4 @@
-import { FSLog } from "../../FSLogger";
+import {FSLog} from "../../FSLogger";
 
 export namespace Jailbreak {
     const NO = ptr(0);
@@ -48,35 +48,33 @@ export namespace Jailbreak {
         hook_AppInfo();
         hook_FileAndFolderPathDetection();
 
-        'use strict';
 
         // Hook FileManager.default.destinationOfSymbolicLink(atPath:) method
-        var sel = ObjC.selector("destinationOfSymbolicLinkAtURL:error:")
-        // Interceptor.attach(Module.findExportByName("Foundation", "destinationOfSymbolicLinkAtURL:error:")||NULL, {
-        Interceptor.attach(sel, {
-            onEnter: function (args) {
-                // Get the path argument
-                var path = new ObjC.Object(args[2]).toString();
-
-                // Check if the path matches any of the paths to be checked
-                var pathsToCheck = [
-                    "/var/lib/undecimus/apt",
-                    "/Applications",
-                    "/Library/Ringtones",
-                    "/Library/Wallpaper",
-                    "/usr/arm-apple-darwin9",
-                    "/usr/include",
-                    "/usr/libexec",
-                    "/usr/share"
-                ];
-
-                if (pathsToCheck.indexOf(path) >= 0) {
-                    // Return a fake result to bypass the original check
-                    args[3] = ObjC.classes.NSString.stringWithString_("fake_destination");
-                }
-            }
-        });
-
+        // var sel = ObjC.selector("destinationOfSymbolicLinkAtURL:error:")
+        // // Interceptor.attach(Module.findExportByName("Foundation", "destinationOfSymbolicLinkAtURL:error:")||NULL, {
+        // Interceptor.attach(sel, {
+        //     onEnter: function (args) {
+        //         // Get the path argument
+        //         var path = new ObjC.Object(args[2]).toString();
+        //
+        //         // Check if the path matches any of the paths to be checked
+        //         var pathsToCheck = [
+        //             "/var/lib/undecimus/apt",
+        //             "/Applications",
+        //             "/Library/Ringtones",
+        //             "/Library/Wallpaper",
+        //             "/usr/arm-apple-darwin9",
+        //             "/usr/include",
+        //             "/usr/libexec",
+        //             "/usr/share"
+        //         ];
+        //
+        //         if (pathsToCheck.indexOf(path) >= 0) {
+        //             // Return a fake result to bypass the original check
+        //             args[3] = ObjC.classes.NSString.stringWithString_("fake_destination");
+        //         }
+        //     }
+        // });
 
         // hook_getpid(); //慎用‼感觉这个也没啥用
     }
@@ -122,7 +120,7 @@ export namespace Jailbreak {
     function hook_AppInfo() {
         let tag = hook_AppInfo.name
         let AppInfo = ObjC.classes.AppInfo;
-
+        // fetchApps 置空后 listInstalledApps 也会置空
         if (AppInfo) {
             let fetchApps = AppInfo['- fetchApps'].implementation;
             let listInstalledApps = AppInfo['- listInstalledApps'].implementation;
@@ -263,20 +261,16 @@ export namespace Jailbreak {
      */
     function hook_dyld_get_image_name() {
         let tag = hook_dyld_get_image_name.name
-        let cheek_paths = ["/Library/MobileSubstrate/MobileSubstrate.dylib",]
-        // let NSString = ObjC.classes.NSString;
-        // let true_path = NSString.stringWithString_("/System/Library/Frameworks/Intents.framework/Intents");
-        let true_path = Memory.allocUtf8String("/System/Library/Frameworks/Intents.framework/Intents");
         let dyld_get_image_name = Module.findExportByName(null, "_dyld_get_image_name") || NULL;
         Interceptor.attach(dyld_get_image_name, {
             onEnter: function (args) {
                 this.idx = args[0].toInt32();
             }, onLeave: function (retval) {
                 let retStr = retval.readCString() || "";
-                if (cheek_paths.includes(retStr)) {
-                    FSLog.d(tag, `_dyld_get_image_name: (${this.idx}) ${retStr} => ${true_path}`);
-                    retval.replace(true_path);
-                }
+                if (!retStr.startsWith("/Library/MobileSubstrate/DynamicLibraries")) return
+                let true_path = Memory.allocUtf8String("/System/Library/Frameworks/Intents.framework/Intents");
+                FSLog.d(tag, `_dyld_get_image_name: (${this.idx}) ${retStr} => ${true_path}`);
+                retval.replace(true_path);
             }
         })
     }
@@ -519,7 +513,7 @@ export namespace Jailbreak {
                 const pointer01 = this.info.add(32)
                 const pointerFlag = pointer01.readInt() & 0x800;
                 if (pointerFlag === 0x800) {
-                    FSLog.d(hook_sysctl.name, `__sysctl: ${retval} > __sysctl was called and was disabled`);
+                    FSLog.e(hook_sysctl.name, `__sysctl: ${retval} > __sysctl was called and was disabled`);
                     pointer01.writeInt(0)
                 }
             }
@@ -1433,5 +1427,13 @@ export namespace Jailbreak {
         '/Library/MobileSubstrate/DynamicLibraries/PreferenceLoader.plist',
         '/Library/MobileSubstrate/DynamicLibraries',
         '/var/mobile/Library/Preferences/me.jjolano.shadow.plist',
+        '/etc/ssh/moduli',
+        '/etc/ssh/ssh_config',
+        '/etc/ssh/ssh_host_dsa_key',
+        '/etc/ssh/ssh_host_dsa_key.pub',
+        '/etc/ssh/ssh_host_rsa_key',
+        '/etc/ssh/ssh_host_rsa_key.pub',
+        '/usr/libexec/ssh-pkcs11-helper',
+        '/usr/libexec/ssh-sk-helper',
     ]
 }
