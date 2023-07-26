@@ -48,33 +48,27 @@ export namespace Jailbreak {
         hook_AppInfo();
         hook_FileAndFolderPathDetection();
 
-
-        // Hook FileManager.default.destinationOfSymbolicLink(atPath:) method
-        // var sel = ObjC.selector("destinationOfSymbolicLinkAtURL:error:")
-        // // Interceptor.attach(Module.findExportByName("Foundation", "destinationOfSymbolicLinkAtURL:error:")||NULL, {
-        // Interceptor.attach(sel, {
-        //     onEnter: function (args) {
-        //         // Get the path argument
-        //         var path = new ObjC.Object(args[2]).toString();
-        //
-        //         // Check if the path matches any of the paths to be checked
-        //         var pathsToCheck = [
-        //             "/var/lib/undecimus/apt",
-        //             "/Applications",
-        //             "/Library/Ringtones",
-        //             "/Library/Wallpaper",
-        //             "/usr/arm-apple-darwin9",
-        //             "/usr/include",
-        //             "/usr/libexec",
-        //             "/usr/share"
-        //         ];
-        //
-        //         if (pathsToCheck.indexOf(path) >= 0) {
-        //             // Return a fake result to bypass the original check
-        //             args[3] = ObjC.classes.NSString.stringWithString_("fake_destination");
-        //         }
+        let base = Module.findBaseAddress('IOSSecuritySuite') || NULL
+        // https://github.com/securing/IOSSecuritySuite/blob/8f264f8ce15b9040893ec28d418a454285d4c46e/IOSSecuritySuite/JailbreakChecker.swift#L65
+        // Interceptor.attach(base.add(0xD30C), {
+        //     onLeave: function (retval) {
+        //         console.error(`[ * ] this.retval onLeave :=> ${retval}`)
         //     }
-        // });
+        // })
+        Interceptor.attach(base.add(0xB89C), {
+            onLeave: function (retval) {
+                retval.replace(ptr(0x1))
+                console.log(`[ * ] this.retval onLeave :=> ${retval}`)
+            }
+        })
+
+        // Interceptor.attach(Module.findExportByName(null, 'objc_getClass')||NULL, {
+        //     onEnter: function (args) {
+        //         console.log(`[ * ] objc_getClass onEnter :=> ${args[0].readCString()}`)
+        //     },onLeave: function (retval) {
+        //         console.log(`[ * ] objc_getClass onLeave :=> ${retval}`)
+        //     }
+        // })
 
         // hook_getpid(); //慎用‼感觉这个也没啥用
     }
@@ -257,20 +251,39 @@ export namespace Jailbreak {
 
     /**
      * hook _dyld_get_image_name 方法 检测动态库注入
-     * @private
      */
     function hook_dyld_get_image_name() {
         let tag = hook_dyld_get_image_name.name
+        let keyword = ["SubstrateLoader.dylib", "SSLKillSwitch2.dylib", "SSLKillSwitch.dylib", "MobileSubstrate.dylib", "TweakInject.dylib", "CydiaSubstrate", "cynject",
+            "CustomWidgetIcons", "PreferenceLoader", "RocketBootstrap", "WeeLoader",
+            "/.file",//HideJB(2.1.1)changesfullpathsofthesuspiciouslibrariesto"/.file"
+            "libhooker", "SubstrateInserter", "SubstrateBootstrap", "ABypass", "FlyJB", "Substitute", "Cephei", "Electra", "AppSyncUnified-FrontBoard.dylib", "Shadow",
+            "FridaGadget", "frida", "libcycript"]
         let dyld_get_image_name = Module.findExportByName(null, "_dyld_get_image_name") || NULL;
         Interceptor.attach(dyld_get_image_name, {
             onEnter: function (args) {
                 this.idx = args[0].toInt32();
             }, onLeave: function (retval) {
-                let retStr = retval.readCString() || "";
-                if (!retStr.startsWith("/Library/MobileSubstrate/DynamicLibraries")) return
                 let true_path = Memory.allocUtf8String("/System/Library/Frameworks/Intents.framework/Intents");
-                FSLog.d(tag, `_dyld_get_image_name: (${this.idx}) ${retStr} => ${true_path}`);
-                retval.replace(true_path);
+                let retStr = retval.readCString() || "";
+                let flag = false;
+
+                keyword.forEach(v => {
+                    if (retStr.toLowerCase().includes(v.toLowerCase())) {
+                        flag = true;
+                    }
+                })
+
+                if (retStr.startsWith("/Library/MobileSubstrate/DynamicLibraries")) {
+                    flag = true;
+                } else {
+                    // FSLog.e(tag, `_dyld_get_image_name: (${this.idx}) ${retStr}`);
+                }
+
+                if (flag) {
+                    FSLog.d(tag, `_dyld_get_image_name: (${this.idx}) ${retStr} -> ${true_path.readCString()}`);
+                    retval.replace(true_path);
+                }
             }
         })
     }
@@ -513,7 +526,7 @@ export namespace Jailbreak {
                 const pointer01 = this.info.add(32)
                 const pointerFlag = pointer01.readInt() & 0x800;
                 if (pointerFlag === 0x800) {
-                    FSLog.e(hook_sysctl.name, `__sysctl: ${retval} > __sysctl was called and was disabled`);
+                    FSLog.e(tag, `__sysctl: ${retval} > __sysctl was called and was disabled`);
                     pointer01.writeInt(0)
                 }
             }
@@ -542,21 +555,23 @@ export namespace Jailbreak {
     }
 
     /**
-     * hook NSClassFromString 方法 检测越狱常用类
+     * hook NSClassFromString 方法 检测注入的异常类
      * @private
      */
     function hook_NSClassFromString() {
         let tag = hook_NSClassFromString.name
-        let target_class = ["HBPreferences"];
+        let target_class = ["HBPreferences", "ShadowRuleset"];
         let hook = Module.findExportByName('Foundation', 'NSClassFromString') || NULL
         Interceptor.attach(hook, {
             onEnter: function (args) {
+                // console.log(Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n') + '\n');
                 this.clz = new ObjC.Object(args[0]).toString()
+                FSLog.e(tag, `NSClassFromString: ${this.clz}`)
             },
             onLeave: function (retval) {
                 if (target_class.includes(this.clz)) {
-                    FSLog.d(tag, `NSClassFromString: ${this.clz} retval: ${retval} -> 0x0`);
                     if (retval.toInt32() > 0) {
+                        FSLog.d(tag, `NSClassFromString: ${this.clz} retval: ${retval} -> 0x0`);
                         retval.replace(NO);
                     }
                 }
