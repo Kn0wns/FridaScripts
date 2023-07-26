@@ -24,7 +24,7 @@ function android() {
 
 function ios() {
     // FSLog.ios()
-    const {IOS, Crypto, Network, Jailbreak} = exports_IOS
+    const {IOS, Crypto, Network, Jailbreak, Env} = exports_IOS
 
     // -------------------------------------------------------------------
     // IOS.dump_ui()  // 查看界面UI
@@ -47,4 +47,8 @@ function ios() {
     // Network.bypass_VPN()  // 绕过 VPN 检测
     // Jailbreak.try_bypass()  // 尝试绕过越狱检测
     Jailbreak.bypassAll()  // 绕过所有越狱检测
+
+    // 环境检测
+    // Env.bypassAll()  // 绕过所有环境检测
+    // Env.hook_ptrace()  // hook ptrace
 }
