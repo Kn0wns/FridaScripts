@@ -74,6 +74,58 @@ export namespace Crypto {
         }
     }
 
+    export function RSA() {
+        // SecKeyDecrypt & SecKeyEncrypt
+        let tag = RSA.name;
+        let SecKeyDecrypt = Module.findExportByName('Security', 'SecKeyDecrypt');
+        let SecKeyEncrypt = Module.findExportByName('Security', 'SecKeyEncrypt');
+
+        if (SecKeyDecrypt == null) {
+            FSLog.e(tag, "can not find SecKeyDecrypt")
+        } else {
+            inline_hook(SecKeyDecrypt, false);
+        }
+
+        if (SecKeyEncrypt == null) {
+            FSLog.e(tag, "can not find SecKeyEncrypt")
+        } else {
+            inline_hook(SecKeyEncrypt, true);
+        }
+
+        function inline_hook(address: NativePointerValue, isEncrypt: boolean = true) {
+            let flag = isEncrypt ? 'SecKeyEncrypt' : 'SecKeyDecrypt';
+            Interceptor.attach(address, {
+                onEnter: function (args) {
+                    this.KeyRef = args[0];                     /* 公私钥引用, 传入NULL表示使用私钥 */
+                    this.padding = args[1];                     /* OAEP填充方式 */
+                    this.inBuffer = args[2];                    /* 待解密数据 */
+                    this.inLength = args[3];                    /* 待解密数据长度 */
+                    this.outBuffer = args[4];                   /* 解密后数据 */
+                    this.outLength = args[5];                   /* 解密后数据长度 */
+                    FSLog.w(tag, `${flag}(${this.KeyRef}, ${this.padding}, ${this.inBuffer}, ${this.inLength}, ${this.outBuffer}, ${this.outLength})`);
+                },
+                onLeave: function (retval) {
+                    let key = new ObjC.Object(this.KeyRef);
+                    let padding = this.padding.toInt32();
+                    let inBuffer = this.inBuffer.readCString();
+                    let outBuffer = this.outBuffer.readCString();
+                    let inLength = this.inLength.toInt32();
+                    let outLength = this.outLength.readPointer().toInt32();
+                    let inBuffer_hex = Array.from(new Uint8Array(this.outBuffer.readByteArray(inLength) || new ArrayBuffer(0)))
+                        .map(byte => ('00' + byte.toString(16)).slice(-2)).join('')
+                    let outBuffer_hex = Array.from(new Uint8Array(this.outBuffer.readByteArray(outLength) || new ArrayBuffer(0)))
+                        .map(byte => ('00' + byte.toString(16)).slice(-2)).join('')
+                    FSLog.d(tag, `${flag} publicKeyRef: ${key}`);
+                    FSLog.d(tag, `${flag} padding: ${padding}`);
+                    FSLog.d(tag, `${flag} inBuffer: ${inBuffer}`);
+                    FSLog.d(tag, `${flag} inBuffer_hex: ${inBuffer_hex}`);
+                    FSLog.d(tag, `${flag} outBuffer: ${outBuffer}`);
+                    FSLog.d(tag, `${flag} outBuffer_hex: ${outBuffer_hex}`);
+                }
+            })
+        }
+    }
+
     export function MD5() {
         Hash_hook('libcommonCrypto.dylib', 'CC_MD5')
     }
