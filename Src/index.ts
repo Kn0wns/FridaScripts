@@ -35,11 +35,11 @@ function ios() {
     // frida-trace -UFi CCCrypt
     // frida-trace -UFi "CC_MD5" -i "CC_SHA1"
     // frida-trace -UFi SecKeyEncrypt -i SecKeyDecrypt  // RSA 加解密
-    // Crypto.All()  // hook 所有的加密方法
+    Crypto.All()  // hook 所有的加密方法
     // Crypto.base64()
     // Crypto.MD5()
     // Crypto.SHA1()
-    Crypto.RSA()
+    // Crypto.RSA()
     // Crypto.CCCrypto()  // AES.DES.3DES.CAST.RC4.RC2.Blowfish
 
     // 快速定位
