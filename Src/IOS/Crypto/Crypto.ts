@@ -133,10 +133,10 @@ export namespace Crypto {
                 onLeave: function (retval) {
                     let key = new ObjC.Object(this.KeyRef);
                     let padding = this.padding.toInt32();
-                    let inBuffer = this.inBuffer.readCString();
-                    let outBuffer = this.outBuffer.readCString();
                     let inLength = this.inLength.toInt32();
                     let outLength = this.outLength.readPointer().toInt32();
+                    let inBuffer = this.inBuffer.readCString(inLength)
+                    let outBuffer = this.outBuffer.readCString(outLength)
                     let inBuffer_hex = Array.from(new Uint8Array(this.outBuffer.readByteArray(inLength) || new ArrayBuffer(0)))
                         .map(byte => ('00' + byte.toString(16)).slice(-2)).join('')
                     let outBuffer_hex = Array.from(new Uint8Array(this.outBuffer.readByteArray(outLength) || new ArrayBuffer(0)))
