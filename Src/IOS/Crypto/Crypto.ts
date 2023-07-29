@@ -92,6 +92,32 @@ export namespace Crypto {
             inline_hook(SecKeyEncrypt, true);
         }
 
+        function getPublicKeyDataFromRef(publicKeyRef: NativePointerValue) {
+            let SecKeyCopyExternalRepresentationAddress = Module.findExportByName('Security', 'SecKeyCopyExternalRepresentation') || NULL;
+            const SecKeyCopyExternalRepresentation = new NativeFunction(SecKeyCopyExternalRepresentationAddress, 'pointer', ['pointer', 'pointer']);
+
+            if (SecKeyCopyExternalRepresentation == null) {
+                FSLog.e(tag, "can not find SecKeyCopyExternalRepresentation")
+                return
+            }
+
+            const errorPtr = Memory.alloc(Process.pointerSize);
+            const publicKeyDataPtr = SecKeyCopyExternalRepresentation(publicKeyRef, errorPtr);
+
+            if (publicKeyDataPtr.isNull()) {
+                FSLog.e(tag, 'Failed to copy public key data');
+                return null;
+            }
+            // {length = 140, bytes = 0x30818902 81810095 85a4773a beecb949 ... 49556b02 03010001 }
+            const publicKeyData = new ObjC.Object(publicKeyDataPtr);
+            let publicKeyBytes = Array.from(new Uint8Array(publicKeyData.bytes().readByteArray(publicKeyData.length()) || new ArrayBuffer(0)))
+                .map(byte => ('00' + byte.toString(16)).slice(-2)).join('')
+            const publickeyBase64 = publicKeyData.base64EncodedStringWithOptions_(0);
+            FSLog.d(tag, `keyBase64: ${publickeyBase64}`)
+            FSLog.d(tag, `KeyBytes: ${publicKeyBytes}`)
+            // return publickeyBase64, publicKeyBytes;
+        }
+
         function inline_hook(address: NativePointerValue, isEncrypt: boolean = true) {
             let flag = isEncrypt ? 'SecKeyEncrypt' : 'SecKeyDecrypt';
             Interceptor.attach(address, {
@@ -115,7 +141,8 @@ export namespace Crypto {
                         .map(byte => ('00' + byte.toString(16)).slice(-2)).join('')
                     let outBuffer_hex = Array.from(new Uint8Array(this.outBuffer.readByteArray(outLength) || new ArrayBuffer(0)))
                         .map(byte => ('00' + byte.toString(16)).slice(-2)).join('')
-                    FSLog.d(tag, `${flag} publicKeyRef: ${key}`);
+                    FSLog.d(tag, `${flag} key: ${key}`);
+                    getPublicKeyDataFromRef(this.KeyRef)
                     FSLog.d(tag, `${flag} padding: ${padding}`);
                     FSLog.d(tag, `${flag} inBuffer: ${inBuffer}`);
                     FSLog.d(tag, `${flag} inBuffer_hex: ${inBuffer_hex}`);
