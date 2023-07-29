@@ -39,6 +39,7 @@ function ios() {
     // Crypto.base64()
     // Crypto.MD5()
     // Crypto.SHA1()
+    Crypto.RSA()
     // Crypto.CCCrypto()  // AES.DES.3DES.CAST.RC4.RC2.Blowfish
 
     // 快速定位
@@ -46,7 +47,7 @@ function ios() {
 
     // Network.bypass_VPN()  // 绕过 VPN 检测
     // Jailbreak.try_bypass()  // 尝试绕过越狱检测
-    Jailbreak.bypassAll()  // 绕过所有越狱检测
+    // Jailbreak.bypassAll()  // 绕过所有越狱检测
 
     // 环境检测
     // Env.bypassAll()  // 绕过所有环境检测
