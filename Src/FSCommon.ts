@@ -83,6 +83,16 @@ export namespace FSCommon {
      * @param {string} moduleName
      * @param {string} saveDir      如果 Android 环境下应该保存在 /data/data/com.package.name/ 目录下，
      *                              否则可能会遇到权限问题，导致保存失败。
+     *
+     * if (Java.available) {
+     *     Java.perform(() => {
+     *         dump_module('libmtguard.so');
+     *     });
+     * }
+     *
+     * if (ObjC.available) {
+     *     dump_module('Hopper Disassembler v4');
+     * }
      */
     export function dump_module(moduleName: string) {
         const tag = 'dump_module';
