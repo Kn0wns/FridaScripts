@@ -1,0 +1,78 @@
+﻿IDA快捷键
+	修改类型Y 修改参数名N
+	空格键转文本视图/图形视图(程序流程)
+	F5代码转换为伪C代码
+	在IDA里对于一个函数没有正确识别出名字的话则用["sub_函数地址"]来表示
+	TAB键切换汇编代码
+查看汇编代码的机器码
+	options->general->Disassembly->Number of opcode bytes.
+		arm 一般设置为4 但是 8最保险，ida有时候会自己做优化，把两条汇编指令整成一条
+
+JNI动态注册可以混淆	静态注册无法混淆
+	静态函数:导出表 java_开头 + Pkg + Class name + Method name
+		第一个参数	JNIEnv* 
+		第二个参数	jobject/jclass(静态函数)
+		第三个参数开始才是传入数据
+
+	动态注册需要自写JNI_OnLoad 需要FindClass	ResgisterNatives()
+		动态第一个参数 JavaVM
+
+
+So层Hook需要得到一个地址 才能对这个地址进行拦截
+	静态注册:
+		Module.findExportByName("SoName", "导出函数名")			获取导出函数基址
+		Module.findBaseAddress("SoName")						获取so库的基址
+
+	动态注册
+
+ptr:new NativePointer()
+
+ARM32有以下两个指令集	ARM64就只有ARM
+	Thumh	2/4个字节	在该指令集下真实函数地址需要+1
+	ARM		4个字节
+
+
+C语法
+	strlen			取字符串长度
+
+
+
+JNI相关
+	NewStringUTF		返回jString
+	NewByteArray		new C数组
+	SetByteArrayRegion	C数组转换成Jbyte数组
+	dlopen,dlsym		调用第三方自定义的 .so库（包括JNI->JNI）	返回值(函数指针/地址)
+	GetEnv				第二参数类型 JNIEnv*
+	GetArrayLength		数组长度
+	strcmp				两个字符串比较 如果一样返回0
+
+
+
+
+
+
+
+
+
+
+
+//so层打印jarray类型
+function jbyteArray2Array(jbyteArray) {
+    var ret;
+    Java.perform(function () {
+        var b = Java.use('[B');
+        var buffer = Java.cast(jbyteArray, b);
+        ret = Java.array('byte', buffer);
+    });
+    return ret;
+}
+
+
+
+
+
+hexdump	只是把内存数据转成十六进制显示	//不会完整显示出来所有数据
+	hexdump( args[2] ,{ length : args[2].toInt32() })	//显示所有数据
+	
+	readCstring()读取C语言string
+	toInt32转成十进制
