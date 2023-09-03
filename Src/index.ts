@@ -1,4 +1,4 @@
-import { FSLog } from "./FSLogger";
+import {FSLog} from "./FSLogger";
 import * as exports_Android from "./Android/__exports";
 import * as exports_IOS from "./IOS/__exports";
 
@@ -10,7 +10,7 @@ import * as exports_IOS from "./IOS/__exports";
 function android() {
     FSLog.bDebug = false  // 关闭 debug 级别的信息输出
     // FSLog.android()
-    const { Android } = exports_Android
+    const {Android, Bypass} = exports_Android
 
     // -------------------------------------------------------------------
 
@@ -18,12 +18,27 @@ function android() {
     // Android.jhook(`com.qq.lib.EncryptUtil`, `encrypt`,false) // 第三参数是否打印堆栈
     // Android.jhook(`inject.HttpUtils`, [`send`, `send2`], true) // 批量hook同一个类下的多个方法
     // Android.jhook(`com.sswl.sdk.h.o`, [`b`], true) // 批量hook同一个类下的多个方法
+
+    // 对抗
+    // Bypass.anti_debug()  // 批量一些反调
+    // Bypass.bypass_frida_libc();
+    // Bypass.bypass_frida_strcmp();
+    // Bypass.bypass_root();
+    // Bypass.bypass_debug_ptrace_android();
+    // Bypass.bypass_debug_fork();
+    // Bypass.bypass_debug_fgets();
+    // Bypass.bypass_debug_exit();
+    // Bypass.bypass_debug_kill();
+    // SSL
+    // Bypass.bypass_ssl_multi_unpinning()
+    // Bypass.bypass_ssl_UnpinningPlus();
+    // Bypass.bypass_ssl_flutter()
 }
 
 
 function ios() {
     // FSLog.ios()
-    const { IOS, Crypto, Network, Jailbreak, Env } = exports_IOS
+    const {IOS, Crypto, Network, Jailbreak, Env} = exports_IOS
 
     // -------------------------------------------------------------------
     // IOS.dump_ui()  // 查看界面UI
