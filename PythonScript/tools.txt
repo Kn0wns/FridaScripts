@@ -1,0 +1,4 @@
+https://github.com/skylot/jadx.git
+https://github.com/CodingGay/BlackDex.git
+https://github.com/Lz1y/strongR-frida-android/releases
+https://github.com/SeeFlowerX/frida-protobuf.git

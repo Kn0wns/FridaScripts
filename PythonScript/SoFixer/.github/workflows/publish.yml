@@ -1,0 +1,90 @@
+name: auto build and release
+
+on: 
+  push:
+    tags:
+      - v*     # Push events for all vx tags
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: '${{ github.ref }}'
+        release_name: 'Release ${{ github.ref }}'
+        draft: false
+        prerelease: false
+    outputs:
+      UPLOAD_URL: ${{ steps.create_release.outputs.upload_url }}
+
+  publish:
+    needs: [create_release]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: build32 environment create
+      run: cmake -E make_directory ${{github.workspace}}/build32
+
+    - name: build32 Configure CMake
+      shell: bash
+      working-directory: ${{github.workspace}}/build32
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DSO_64=OFF -G "CodeBlocks - Unix Makefiles"
+
+    - name: build32 build
+      working-directory: ${{github.workspace}}/build32
+      shell: bash
+      run: cmake --build . --config $BUILD_TYPE
+
+    - name: build64 environment create
+      run: cmake -E make_directory ${{github.workspace}}/build64
+
+    - name: build64 Configure CMake
+      shell: bash
+      working-directory: ${{github.workspace}}/build64
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DSO_64=ON -G "CodeBlocks - Unix Makefiles"
+
+    - name: build64 build
+      working-directory: ${{github.workspace}}/build64
+      shell: bash
+      run: cmake --build . --config $BUILD_TYPE
+
+
+    - name: Name Format
+      id: release_name_format
+      if: ${{ runner.os == 'Windows' }}
+      run: echo "::set-output name=format::.exe"
+
+    - name: Upload build 32
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: '${{ needs.create_release.outputs.UPLOAD_URL }}'
+        asset_path: '${{ github.workspace }}/build32/SoFixer32${{ steps.release_name_format.outputs.format }}'
+        asset_name: 'SoFixer-${{ runner.os }}-32${{ steps.release_name_format.outputs.format }}'
+        asset_content_type: application/octet-stream
+
+    - name: Upload build 64
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: '${{ needs.create_release.outputs.UPLOAD_URL }}'
+        asset_path: '${{ github.workspace }}/build64/SoFixer64${{ steps.release_name_format.outputs.format }}'
+        asset_name: 'SoFixer-${{ runner.os }}-64${{ steps.release_name_format.outputs.format }}'
+        asset_content_type: application/octet-stream
