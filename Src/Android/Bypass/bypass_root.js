@@ -22,7 +22,20 @@ export const bypass_root = () => {
             "eu.chainfire.supersu.pro", "com.kingouser.com", "com.topjohnwu.magisk"
         ];
 
-        let RootBinaries = ["su", "busybox", "supersu", "Superuser.apk", "KingoUser.apk", "SuperSu.apk", "magisk"];
+        let RootBinaries = ["su", "busybox", "supersu", "Superuser.apk", "KingoUser.apk", "SuperSu.apk", "magisk",
+            "/data/local/bin/su",
+            "/data/local/su",
+            "/data/local/xbin/su",
+            "/dev/com.koushikdutta.superuser.daemon/",
+            "/sbin/su",
+            "/system/app/Superuser.apk",
+            "/system/bin/failsafe/su",
+            "/system/bin/su",
+            "/system/etc/init.d/99SuperSUDaemon",
+            "/system/sd/xbin/su",
+            "/system/xbin/busybox",
+            "/system/xbin/daemonsu",
+            "/system/xbin/su"];
 
         let RootProperties = {
             "ro.build.selinux": "1",
