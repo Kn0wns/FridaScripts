@@ -10,7 +10,7 @@ import * as exports_IOS from "./IOS/__exports";
 function android() {
     FSLog.bDebug = false  // 关闭 debug 级别的信息输出
     // FSLog.android()
-    const {Android, Bypass} = exports_Android
+    const {Android, Bypass, autoEncrypt, View} = exports_Android
 
     // -------------------------------------------------------------------
 
@@ -33,6 +33,10 @@ function android() {
     // Bypass.bypass_ssl_multi_unpinning()
     // Bypass.bypass_ssl_UnpinningPlus();
     // Bypass.bypass_ssl_flutter()
+
+    // autoEncrypt()  // Android Java 加密自吐
+
+    // View.OnClickListener() // 监听点击事件
 }
 
 
