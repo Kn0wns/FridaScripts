@@ -2,7 +2,7 @@
 // @Author  : KKings
 // @File    : SSL_Keys.js
 // @Software: PyCharm
-// @Refs    : https://codeshare.frida.re/@fanglian/tls-key-logger/
+// @desc    : https://codeshare.frida.re/@fanglian/tls-key-logger/
 
 const keylog_callback = new NativeCallback((ssl, line) => {
     send(line.readCString());

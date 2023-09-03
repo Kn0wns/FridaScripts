@@ -17,7 +17,7 @@ function android() {
     // hook
     // Android.jhook(`com.qq.lib.EncryptUtil`, `encrypt`,false) // 第三参数是否打印堆栈
     // Android.jhook(`inject.HttpUtils`, [`send`, `send2`], true) // 批量hook同一个类下的多个方法
-    Android.jhook(`com.sswl.sdk.h.o`, [`b`], true) // 批量hook同一个类下的多个方法
+    // Android.jhook(`com.sswl.sdk.h.o`, [`b`], true) // 批量hook同一个类下的多个方法
 }
 
 
