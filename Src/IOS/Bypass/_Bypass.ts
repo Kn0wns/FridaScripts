@@ -1,7 +1,7 @@
 import {FSLog} from "../../FSLogger";
 
 
-export namespace Anti {
+export namespace Bypass {
 
     export function hook_ptrace() {
         let tag = hook_ptrace.name
