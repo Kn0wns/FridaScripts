@@ -30,7 +30,8 @@ export class FSLog {
         second = second < 10 ? "0" + second : second;
         mSecond = mSecond < 10 ? "00" + mSecond : mSecond < 100 ? "0" + mSecond : mSecond;
 
-        return `${hour}:${minute}:${second}`;
+        // return `${hour}:${minute}:${second}`;
+        return `${date.toLocaleDateString()} ${hour}:${minute}:${second}`;
     }
 
     private static log(logFunc: (message?: any, ...optionalParams: any[]) => void, level: string, tag: string, content: any) {
@@ -53,7 +54,8 @@ export class FSLog {
                 emoji = `❓`
                 break;
         }
-        logFunc(`[${level}][${this.dateFormat2(new Date())}][PID:${Process.id}]${this.threadName}[${Process.getCurrentThreadId()}][${tag}] ${emoji} ${content}`);
+        // logFunc(`[${level}][${this.dateFormat2(new Date())}][PID:${Process.id}]${this.threadName}[${Process.getCurrentThreadId()}][${tag}] ${emoji} ${content}`);
+        logFunc(`[${level}][${this.dateFormat(new Date())}][PID:${Process.id}]${this.threadName}[${Process.getCurrentThreadId()}][${tag}] ${emoji} ${content}`);
     }
 
 
