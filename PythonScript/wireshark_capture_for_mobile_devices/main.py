@@ -18,7 +18,7 @@ def on_message(message, data):
 package_name = sys.argv[1]  # 包名
 pid = frida.get_usb_device().spawn(package_name)
 session = frida.get_usb_device().attach(pid)
-js_code = open("SSLKeys.js.js", "r").read()
+js_code = open("SSLKeys.js", "r").read()
 script = session.create_script(js_code)
 frida.get_usb_device().resume(pid)
 script.on('message', on_message)
