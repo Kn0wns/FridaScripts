@@ -2,10 +2,10 @@
 // {"type":"function","name":"__cxa_atexit","module":"/system/lib64/libc.so","address":"0x79013b40b4"}
 // type(类型) name(名字) module(路径) address(内存中真实地址)
 
-function _enum(t) {
-    for (const t of imports) {
-        // console.log(JSON.stringify(t))
-        console.log(`${t.name} - ${t.address}`)
+function _enum(Symbols) {
+    for (const t of Symbols) {
+        console.log(JSON.stringify(t))
+        // console.log(`${t.name} - ${t.address}`)
     }
 }
 
@@ -19,6 +19,10 @@ const Symbols = Module.enumerateSymbols("libencryptlib.so") // 符号表:SHT_SYM
 // 操作App So推荐枚举exports
 // 操作系统So推荐枚举Symbols
 
+// {"name":"app_process64","base":"0x6070ba4000","size":24576,"path":"/system/bin/app_process64"}
+// {"name":"linker64","base":"0x7175872000","size":294912,"path":"/system/bin/linker64"}
+// {"name":"libandroid_runtime.so","base":"0x7147148000","size":2408448,"path":"/system/lib64/libandroid_runtime.so"}
+// {"name":"libbinder.so","base":"0x7173a21000","size":794624,"path":"/system/lib64/libbinder.so"}
 const modules = Process.enumerateModules();// 枚举所有模块
 _enum(modules)
 // 从枚举的所有模块里在枚举其中三个表
