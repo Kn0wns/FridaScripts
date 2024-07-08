@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "prepare": "npm run build",
-    "build": "frida-compile Src/index.ts -o Src/hook.js -c",
-    "watch": "frida-compile Src/index.ts -o Src/hook.js -w"
+    "build": "frida-compile Src/index.ts -o hook.js -c",
+    "watch": "frida-compile Src/index.ts -o hook.js -w"
   },
   "keywords": [],
   "author": "",
