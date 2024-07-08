@@ -5,7 +5,7 @@ import os
 
 
 def fix_so(arch, origin_so_name, so_name, base, size):
-    print('arch:',arch)
+    print('arch:', arch)
     if arch == "arm":
         os.system("adb push android/SoFixer32 /data/local/tmp/SoFixer")
     elif arch == "arm64":
@@ -26,8 +26,10 @@ def read_frida_js_source():
     with open("dump_so.js", "r") as f:
         return f.read()
 
+
 def on_message(message, data):
     pass
+
 
 if __name__ == "__main__":
     device: frida.core.Device = frida.get_usb_device()
@@ -38,25 +40,25 @@ if __name__ == "__main__":
     script.load()
 
     if len(sys.argv) < 2:
-        allmodule = script.exports.allmodule()
-        for module in allmodule:
-            print(module["name"])
+        all_modules = script.exports_sync.allmodule()
+        for module in all_modules:
+            if (module['name'].startswith("libil2cpp")):
+                print(module["name"])
+                print(module)
     else:
         origin_so_name = sys.argv[1]
-        module_info = script.exports.findmodule(origin_so_name)
+        module_info = script.exports_sync.findmodule(origin_so_name)
         print(module_info)
         base = module_info["base"]
         size = module_info["size"]
-        module_buffer = script.exports.dumpmodule(origin_so_name)
+
+        module_buffer = script.exports_sync.dumpmodule(origin_so_name)
         if module_buffer != -1:
             dump_so_name = origin_so_name + ".dump.so"
             with open(dump_so_name, "wb") as f:
                 f.write(module_buffer)
                 f.close()
-                arch = script.exports.arch()
+                arch = script.exports_sync.arch()
                 fix_so_name = fix_so(arch, origin_so_name, dump_so_name, base, size)
-                
                 print(fix_so_name)
                 os.remove(dump_so_name)
-
-
