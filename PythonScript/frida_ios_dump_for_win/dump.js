@@ -154,6 +154,7 @@ function open(pathname, flags, mode) {
 }
 
 var modules = null;
+
 function getAllAppModules() {
     modules = new Array();
     var tmpmods = Process.enumerateModulesSync();
@@ -177,17 +178,17 @@ var LC_ENCRYPTION_INFO = 0x21;
 var LC_ENCRYPTION_INFO_64 = 0x2C;
 
 function pad(str, n) {
-    return Array(n-str.length+1).join("0")+str;
+    return Array(n - str.length + 1).join("0") + str;
 }
 
 function swap32(value) {
-    value = pad(value.toString(16),8)
+    value = pad(value.toString(16), 8)
     var result = "";
-    for(var i = 0; i < value.length; i=i+2){
+    for (var i = 0; i < value.length; i = i + 2) {
         result += value.charAt(value.length - i - 2);
         result += value.charAt(value.length - i - 1);
     }
-    return parseInt(result,16)
+    return parseInt(result, 16)
 }
 
 function dumpModule(name) {
@@ -213,7 +214,7 @@ function dumpModule(name) {
     var oldmodpath = modules[i].path;
 
 
-    if(!access(allocStr(newmodpath),0)){
+    if (!access(allocStr(newmodpath), 0)) {
         remove(allocStr(newmodpath));
     }
 
@@ -233,7 +234,7 @@ function dumpModule(name) {
     if (magic == MH_MAGIC || magic == MH_CIGAM) {
         is64bit = false;
         size_of_mach_header = 28;
-    }else if (magic == MH_MAGIC_64 || magic == MH_CIGAM_64) {
+    } else if (magic == MH_MAGIC_64 || magic == MH_CIGAM_64) {
         is64bit = true;
         size_of_mach_header = 32;
     }
@@ -246,13 +247,13 @@ function dumpModule(name) {
     var fileoffset = 0;
     var filesize = 0;
     magic = getU32(buffer);
-    if(magic == FAT_CIGAM || magic == FAT_MAGIC){
+    if (magic == FAT_CIGAM || magic == FAT_MAGIC) {
         var off = 4;
         var archs = swap32(getU32(buffer.add(off)));
         for (var i = 0; i < archs; i++) {
             var cputype = swap32(getU32(buffer.add(off + 4)));
             var cpusubtype = swap32(getU32(buffer.add(off + 8)));
-            if(cur_cpu_type == cputype && cur_cpu_subtype == cpusubtype){
+            if (cur_cpu_type == cputype && cur_cpu_subtype == cpusubtype) {
                 fileoffset = swap32(getU32(buffer.add(off + 12)));
                 filesize = swap32(getU32(buffer.add(off + 16)));
                 break;
@@ -260,24 +261,23 @@ function dumpModule(name) {
             off += 20;
         }
 
-        if(fileoffset == 0 || filesize == 0)
-            return;
+        if (fileoffset == 0 || filesize == 0) return;
 
         lseek(fmodule, 0, SEEK_SET);
         lseek(foldmodule, fileoffset, SEEK_SET);
-        for(var i = 0; i < parseInt(filesize / BUFSIZE); i++) {
+        for (var i = 0; i < parseInt(filesize / BUFSIZE); i++) {
             read(foldmodule, buffer, BUFSIZE);
             write(fmodule, buffer, BUFSIZE);
         }
-        if(filesize % BUFSIZE){
+        if (filesize % BUFSIZE) {
             read(foldmodule, buffer, filesize % BUFSIZE);
             write(fmodule, buffer, filesize % BUFSIZE);
         }
-    }else{
+    } else {
         var readLen = 0;
         lseek(foldmodule, 0, SEEK_SET);
         lseek(fmodule, 0, SEEK_SET);
-        while(readLen = read(foldmodule, buffer, BUFSIZE)) {
+        while (readLen = read(foldmodule, buffer, BUFSIZE)) {
             write(fmodule, buffer, readLen);
         }
     }
@@ -315,8 +315,8 @@ function dumpModule(name) {
 
 function loadAllDynamicLibrary(app_path) {
     var defaultManager = ObjC.classes.NSFileManager.defaultManager();
-    var errorPtr = Memory.alloc(Process.pointerSize); 
-    Memory.writePointer(errorPtr, NULL); 
+    var errorPtr = Memory.alloc(Process.pointerSize);
+    Memory.writePointer(errorPtr, NULL);
     var filenames = defaultManager.contentsOfDirectoryAtPath_error_(app_path, errorPtr);
     for (var i = 0, l = filenames.count(); i < l; i++) {
         var file_name = filenames.objectAtIndex_(i);
@@ -332,17 +332,11 @@ function loadAllDynamicLibrary(app_path) {
                     console.log("[frida-ios-dump]: Load " + file_name + " failed. ");
                 }
             }
-        } else if (file_name.hasSuffix_(".bundle") || 
-                   file_name.hasSuffix_(".momd") ||
-                   file_name.hasSuffix_(".strings") ||
-                   file_name.hasSuffix_(".appex") ||
-                   file_name.hasSuffix_(".app") ||
-                   file_name.hasSuffix_(".lproj") ||
-                   file_name.hasSuffix_(".storyboardc")) {
+        } else if (file_name.hasSuffix_(".bundle") || file_name.hasSuffix_(".momd") || file_name.hasSuffix_(".strings") || file_name.hasSuffix_(".appex") || file_name.hasSuffix_(".app") || file_name.hasSuffix_(".lproj") || file_name.hasSuffix_(".storyboardc")) {
             continue;
         } else {
             var isDirPtr = Memory.alloc(Process.pointerSize);
-            Memory.writePointer(isDirPtr,NULL);
+            Memory.writePointer(isDirPtr, NULL);
             defaultManager.fileExistsAtPath_isDirectory_(file_path, isDirPtr);
             if (Memory.readPointer(isDirPtr) == 1) {
                 loadAllDynamicLibrary(file_path);
@@ -355,7 +349,7 @@ function loadAllDynamicLibrary(app_path) {
                             console.log("[frida-ios-dump]: " + file_name + " has been dlopen.");
                             break;
                         }
-                    } 
+                    }
 
                     if (!is_loaded) {
                         if (dlopen(allocStr(file_path.UTF8String()), 9)) {
@@ -376,10 +370,10 @@ function handleMessage(message) {
     loadAllDynamicLibrary(app_path);
     // start dump
     modules = getAllAppModules();
-    for (var i = 0; i  < modules.length; i++) {
+    for (var i = 0; i < modules.length; i++) {
         console.log("start dump " + modules[i].path);
         var result = dumpModule(modules[i].path);
-        send({ dump: result, path: modules[i].path});
+        send({dump: result, path: modules[i].path});
     }
     send({app: app_path.toString()});
     send({done: "ok"});
