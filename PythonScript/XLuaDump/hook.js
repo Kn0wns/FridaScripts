@@ -8,6 +8,8 @@
 // 这个函数和 lua_load 返回值相同。name 作为代码块的名字，用于调试信息和错误消息。mode 字符串的作用同函数 lua_load
 
 var g_appFilePath = ""  // `/data/data/包名/files/XLuaDump/`
+var index = 0;
+
 function getAppFilesPath() {
     var currentApplication = Java.use('android.app.ActivityThread').currentApplication();
     var context = currentApplication.getApplicationContext();
@@ -47,7 +49,6 @@ function writeFile(filename, data) {
     ios.close();
 }
 
-var index = 0;
 
 function hook_loadbuffer(so) {
     let loadbuffer = Module.findExportByName(so, "luaL_loadbufferx");
@@ -71,22 +72,17 @@ function monitingLoadSo(soList, hook_func) {
             onEnter: function (args) {
                 this.soName = args[0].readCString();  // 输出so路径
             }, onLeave: function (retval) {
-                if (this.soName) {
-                    for (const soListElement of soList) {
-                        if (this.soName.includes(soListElement)) {
-                            hook_func(soListElement);
-                            console.log(`[!] ${this.soName} load success!`);
-                            break;
-                        }
-                    }
+                if (soList.includes(this.soName)) {
+                    console.log(`[!] ${this.soName} load success!`);
+                    hook_func(soListElement);
                 }
             }
         })
     }
 
-    // const dlopen = Module.findExportByName("libdl.so", "dlopen");
+    const dlopen = Module.findExportByName("libdl.so", "dlopen");
     // console.log(JSON.stringify(Process.getModuleByAddress(dlopen)))  // 从地址得到所在so
-    // hook_dlopen(dlopen);  // Android14 hook 有时候会导致手机软重启
+    hook_dlopen(dlopen);  // Android14 hook 有时候会导致手机软重启
     const android_dlopen_ext = Module.findExportByName("libdl.so", "android_dlopen_ext");  // Android 高版本API
     hook_dlopen(android_dlopen_ext);
 }
@@ -94,4 +90,5 @@ function monitingLoadSo(soList, hook_func) {
 monitingLoadSo(['libgame.so', 'libxlua.so'], hook_loadbuffer)
 
 // frida -Ul hook.js -f com.bf.sgs.hdexp
-// frida -l hook.js -f com.tencent.sqsd -H 192.168.137.213:9527
+// frida -l hook.js -f com.tencent.sqsd -H 192.168.137.119:9527
+// 查看 IP adb shell su -c ifconfig wlan0 | findstr Mask
