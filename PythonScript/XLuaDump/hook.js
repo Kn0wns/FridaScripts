@@ -25,7 +25,7 @@ function createDirIfNeeded(path) {
 }
 
 function writeFile(filename, data) {
-    filename = filename.replaceAll('@', '') + '.lua'
+    filename = filename.replaceAll('@', '').replaceAll(/(\.)(?!lua)/gm, "/") + '.lua'
 
     if (g_appFilePath == "") getAppFilesPath();
 
@@ -40,7 +40,7 @@ function writeFile(filename, data) {
 
     // 完整文件路径
     var fullPath = filePath.toString();
-    console.log(fullPath);
+    console.warn(`[*] 文件写入:${fullPath}`);
 
     // 写入文件
     let ios = new File(fullPath, "wb");
@@ -49,6 +49,21 @@ function writeFile(filename, data) {
     ios.close();
 }
 
+function safeSelf() {
+    let connect = Module.findExportByName("libc.so", "connect");
+    if (connect != null) {
+        Interceptor.attach(connect, {
+            onEnter: function (args) {
+                let arg = args[1];
+                let port = arg.add(0x2).readUShort();
+                if (port == 41577 || port == 35421) {
+                    arg.add(0x2).writeUShort(26151);
+                    console.warn(`[!] 端口号被修改为26151`)
+                }
+            }
+        })
+    } else console.error(`未找到connect函数`)
+}
 
 function hook_loadbuffer(so) {
     let loadbuffer = Module.findExportByName(so, "luaL_loadbufferx");
@@ -59,7 +74,7 @@ function hook_loadbuffer(so) {
             let buff_bytes = args[1].readByteArray(size);
             let buff_str = args[1].readCString(size);
             let filename = args[3].readCString();
-            if (filename == buff_str) filename = `unknow_${++index}.lua`;
+            if (filename == buff_str) filename = `unknow_${++index}`;
             writeFile(filename, buff_bytes);
         }
     })
@@ -72,23 +87,27 @@ function monitingLoadSo(soList, hook_func) {
             onEnter: function (args) {
                 this.soName = args[0].readCString();  // 输出so路径
             }, onLeave: function (retval) {
-                if (soList.includes(this.soName)) {
-                    console.log(`[!] ${this.soName} load success!`);
-                    hook_func(soListElement);
+                // this.soName => /data/app/~~BTv61GMj2yXUWhUu27Q6JA==/com.tencent.sqsd-ayKe8c6Clx2_5sUzy_AO7Q==/lib/arm64/libxlua.so
+                // soList => libgame.so,libxlua.so
+                if (this.soName) {
+                    // console.log(`[*] ${this.soName}`)
+                    for (const soListElement of soList) {
+                        if (this.soName.includes(soListElement)) {
+                            console.log(`[!] ${this.soName} load success!`);
+                            hook_func(soListElement);
+                        }
+                    }
                 }
             }
         })
     }
 
-    const dlopen = Module.findExportByName("libdl.so", "dlopen");
-    // console.log(JSON.stringify(Process.getModuleByAddress(dlopen)))  // 从地址得到所在so
-    hook_dlopen(dlopen);  // Android14 hook 有时候会导致手机软重启
     const android_dlopen_ext = Module.findExportByName("libdl.so", "android_dlopen_ext");  // Android 高版本API
     hook_dlopen(android_dlopen_ext);
 }
 
+safeSelf()
 monitingLoadSo(['libgame.so', 'libxlua.so'], hook_loadbuffer)
 
 // frida -Ul hook.js -f com.bf.sgs.hdexp
-// frida -l hook.js -f com.tencent.sqsd -H 192.168.137.119:9527
-// 查看 IP adb shell su -c ifconfig wlan0 | findstr Mask
+// frida -Ul hook.js -f com.tencent.sqsd
