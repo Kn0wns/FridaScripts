@@ -22,12 +22,10 @@ export const bypass_frida_libc = () => {
 export const bypass_frida_strcmp = () => {
     Interceptor.attach(Module.findExportByName("libc.so", "strcmp"), {
         onEnter: function (args) {
-            const str0 = Memory.readCString(args[0]);
-            const str1 = Memory.readCString(args[1]);
+            const str0 = args[0].readCString();
+            const str1 = args[1].readCString()
             FSLog.d(`bypass_strcmp`, "strcmp->" + str0 + "--" + str1);
-            if (str1.includes('interceptor') || str1.includes('debuggable')) {
-                this.found = true;
-            }
+            this.found = str1.includes('interceptor') || str1.includes('debuggable')
         },
         onLeave: function (retval) {
             if (this.found) {
@@ -125,20 +123,19 @@ export const bypass_frida_open = () => {
 
     let fakePath = "/data/local/tmp/maps";
     Interceptor.replace(openPtr, new NativeCallback(function (pathnameptr, flag) {
-        let pathname = Memory.readUtf8String(pathnameptr);
+        let pathname = pathnameptr.readUtf8String();
         if (pathname.indexOf("maps") >= 0 && pathname.indexOf("proc") >= 0) {
             log.d(tag, "replace maps " + pathname);
             let filename = Memory.allocUtf8String(fakePath);
             log.d(tag, "replace maps over");
             return open(filename, flag);
         }
-        if (pathname.indexOf("/su") != -1) {
+        if (pathname.includes("/su")) {
             log.d(tag, "replace su");
             let filename = Memory.allocUtf8String("/xxx/su");
             return open(filename, flag);
         }
-        let fd = open(pathnameptr, flag);
-        return fd;
+        return open(pathnameptr, flag);
     }, 'int', ['pointer', 'int']));
 }
 
@@ -147,7 +144,7 @@ export const bypass_frida_openat = () => {
     const openatPtr = Module.getExportByName('libc.so', 'openat');
     const openat = new NativeFunction(openatPtr, 'int', ['int', 'pointer', 'int', 'int']);
     Interceptor.replace(openatPtr, new NativeCallback(function (fd, pathnameptr, flag, mode) {
-        let pathname = Memory.readUtf8String(pathnameptr);
+        let pathname = pathnameptr.readUtf8String();
         if (pathname.indexOf("maps") >= 0) {
             let filename = Memory.allocUtf8String(fakePath);
             log.d(tag, "replace maps");

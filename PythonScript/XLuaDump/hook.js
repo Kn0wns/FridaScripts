@@ -56,7 +56,7 @@ function safeSelf() {
             onEnter: function (args) {
                 let arg = args[1];
                 let port = arg.add(0x2).readUShort();
-                if (port == 41577 || port == 35421) {
+                if (port == 41577/* || port == 35421*/) {
                     arg.add(0x2).writeUShort(26151);
                     console.warn(`[!] 端口号被修改为26151`)
                 }
