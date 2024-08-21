@@ -10,7 +10,7 @@ import * as exports_IOS from "./IOS/__exports";
 function android() {
     FSLog.bDebug = false  // 关闭 debug 级别的信息输出
     // FSLog.android()
-    const {Android, Bypass, autoEncrypt, View} = exports_Android
+    const {Android, Bypass, View, FastPoint} = exports_Android
 
     // -------------------------------------------------------------------
 
@@ -37,6 +37,7 @@ function android() {
     // 快速定位
     FastPoint.hook()
     FastPoint.hook_encrypt() // Android Java 加密自吐
+    FastPoint.hook_dialog()
     View.OnClickListener() // 监听点击事件
 }
 

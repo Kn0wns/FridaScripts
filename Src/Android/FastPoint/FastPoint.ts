@@ -1,6 +1,7 @@
 import {FSLog as log} from "../../FSLogger";
 import {Utils} from "../Utils/Utils";
-import {systemEncryptionLibrary} from "./SystemEncryptionLibrary";
+import {systemEncryptionLibrary} from "SystemEncryptionLibrary";
+import {Dialog} from "Dialog"
 
 // 快速定位
 export namespace FastPoint {
@@ -16,6 +17,8 @@ export namespace FastPoint {
     }
 
     export const hook_encrypt = () => systemEncryptionLibrary();  // java 系统加密库
+
+    export const hook_dialog = () => Dialog();
 
     function toast() {
         Java.use("android.widget.Toast").makeText.overload('android.content.Context', 'java.lang.CharSequence', 'int').implementation = function (context: any, text: string, duration: number) {
@@ -140,4 +143,6 @@ export namespace FastPoint {
             return this.put.apply(this, arguments);
         }
     }
+
+
 }
