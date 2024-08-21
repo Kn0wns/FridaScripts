@@ -1,7 +1,7 @@
 import {FSLog as log} from "../../FSLogger";
 import {Utils} from "../Utils/Utils";
-import {systemEncryptionLibrary} from "SystemEncryptionLibrary";
-import {Dialog} from "Dialog"
+import {systemEncryptionLibrary} from "./SystemEncryptionLibrary";
+import {Dialog} from "./Dialog"
 
 // 快速定位
 export namespace FastPoint {
