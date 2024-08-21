@@ -1,4 +1,4 @@
-import {FSLog} from "../FSLogger";
+import {FSLog as log} from "../FSLogger";
 import {Utils} from "./Utils/Utils";
 
 export namespace Android {
@@ -15,7 +15,7 @@ export namespace Android {
             fn && Java.perform(() => {
                 Java.use(clzName)[fn].implementation = function () {
                     const ret = this[fn](...arguments);
-                    FSLog.formatArguments(arguments, ret, clzName, fn, isShowStacks, null) // 打印参数/返回值
+                    log.formatArguments(arguments, ret, clzName, fn, isShowStacks, null) // 打印参数/返回值
                     return ret
                 }
             });
@@ -41,7 +41,7 @@ export namespace Android {
         })
 
         const ret = instance[methodName](...params);
-        FSLog.d(callMethod.name, `[>>>] call.${methodName}: ${ret}`)
+        log.d(callMethod.name, `[>>>] call.${methodName}: ${ret}`)
     }
 
     /**
@@ -52,11 +52,11 @@ export namespace Android {
         let ret: Java.Wrapper<{}>;
         Java.choose(className, { // 获取类字节码
             onMatch(obj) {
-                FSLog.d(findInstance.name, `查找实例:${obj}`)
+                log.d(findInstance.name, `查找实例:${obj}`)
                 ret = obj
             },
             onComplete() {
-                if (!ret) FSLog.w(findInstance.name, `内存中所有对象搜索完毕`)
+                if (!ret) log.w(findInstance.name, `内存中所有对象搜索完毕`)
             }
         });
         // @ts-ignore
@@ -72,14 +72,14 @@ export namespace Android {
             Utils.showStacks()
             const result = this.getBytes();
             const newStr = str.$new(result);
-            FSLog.d(hook_string.name, `str.getBytes result => ${newStr}`)
+            log.d(hook_string.name, `str.getBytes result => ${newStr}`)
             return result;
         }
         str.getBytes.overload('java.lang.String').implementation = function (a: any) {
             Utils.showStacks()
             const result = this.getBytes(a);
             const newStr = str.$new(result, a);
-            FSLog.d(hook_string.name, `str.getBytes result => ${newStr}`)
+            log.d(hook_string.name, `str.getBytes result => ${newStr}`)
             return result;
         }
 
@@ -93,7 +93,7 @@ export namespace Android {
 
         NewStringUTFAddr && Interceptor.attach(NewStringUTFAddr, {
             onEnter: function (args) {
-                FSLog.d("NewStringUTF", `NewStringUTF: ${args[1].readCString()}`)
+                log.d("NewStringUTF", `NewStringUTF: ${args[1].readCString()}`)
                 Utils.showStacksACCURATE(this.context);
             }
         });
@@ -114,7 +114,7 @@ export namespace Android {
 
         jniFuncAddress && Interceptor.attach(jniFuncAddress, {
             onEnter: function (args) {
-                FSLog.d(ART.name, `hookART: ${args[1].readCString()}`)
+                log.d(ART.name, `hookART: ${args[1].readCString()}`)
                 Utils.showStacksACCURATE(this.context);
             }
         });
@@ -135,7 +135,7 @@ export namespace Android {
         for (const overloadsArrElement of overloadsArr) {
             overloadsArrElement.implementation = function () {          // hook 方法
                 let ret = this[methodName](...arguments) // apply 跟call 同理 不同的是apply接收数组类型参数
-                FSLog.formatArguments(arguments, ret, className, methodName, null, null) // 打印参数/返回值
+                log.formatArguments(arguments, ret, className, methodName, null, null) // 打印参数/返回值
                 return ret
             }
         }
@@ -184,7 +184,7 @@ export namespace Android {
         // android.net.Uri
         const Uri = Java.use('android.net.Uri');
         Uri.parse.implementation = function (str: string) {
-            FSLog.d('hook_uri', 'str: ' + str);
+            log.d('hook_uri', 'str: ' + str);
             bShowStacks && Utils.showStacks();
             return this.parse(str);
         }
@@ -194,7 +194,7 @@ export namespace Android {
         // java.net.URL;
         const URL = Java.use('java.net.URL');
         URL.$init.overload('java.lang.String').implementation = function (url: string) {
-            FSLog.d('hook_url', 'url: ' + url);
+            log.d('hook_url', 'url: ' + url);
             bShowStacks && Utils.showStacks();
             return this.$init(url);
         }
@@ -205,7 +205,7 @@ export namespace Android {
         JSONObject.getString.implementation = function (key: string) {
             if (key == pKey) {
                 Utils.showStacks();
-                FSLog.d('hook_JSONObject_getString', 'found key: ' + key);
+                log.d('hook_JSONObject_getString', 'found key: ' + key);
             }
             return this.getString(key);
         }
@@ -217,28 +217,28 @@ export namespace Android {
         fastJson.getString.implementation = function (key: string) {
             if (key == pKey) {
                 Utils.showStacks();
-                FSLog.d('hook_fastJson getString', 'found key: ' + key);
+                log.d('hook_fastJson getString', 'found key: ' + key);
             }
             return this.getString(key);
         };
         fastJson.getJSONArray.implementation = function (key: string) {
             if (key == pKey) {
                 Utils.showStacks();
-                FSLog.d('hook_fastJson getJSONArray', 'found key: ' + key);
+                log.d('hook_fastJson getJSONArray', 'found key: ' + key);
             }
             return this.getString(key);
         };
         fastJson.getJSONObject.implementation = function (key: string) {
             if (key == pKey) {
                 Utils.showStacks();
-                FSLog.d('hook_fastJson getJSONObject', 'found key: ' + key);
+                log.d('hook_fastJson getJSONObject', 'found key: ' + key);
             }
             return this.getString(key);
         };
         fastJson.getInteger.implementation = function (key: string) {
             if (key == pKey) {
                 Utils.showStacks();
-                FSLog.d('hook_fastJson getJSONObject', 'found key: ' + key);
+                log.d('hook_fastJson getJSONObject', 'found key: ' + key);
             }
             return this.getString(key);
         };
@@ -255,8 +255,8 @@ export namespace Android {
             }
             if (bRes) {
                 Utils.showStacks()
-                FSLog.d('map', 'key: ' + key);
-                FSLog.d('map', 'val: ' + val);
+                log.d('map', 'key: ' + key);
+                log.d('map', 'val: ' + val);
             }
             this.put(key, val);
         };
@@ -271,8 +271,8 @@ export namespace Android {
             }
             if (null != key1 && bRes) {
                 Utils.showStacks()
-                FSLog.d('LinkedHashMap', 'key: ' + key1);
-                FSLog.d('LinkedHashMap', 'val: ' + val);
+                log.d('LinkedHashMap', 'key: ' + key1);
+                log.d('LinkedHashMap', 'val: ' + val);
             }
             return this.put(key1, val);
         };
@@ -281,29 +281,39 @@ export namespace Android {
     export function hook_log() {
         const Log = Java.use('android.util.Log');
         Log.d.overload('java.lang.String', 'java.lang.String').implementation = function (tag: string, content: string) {
-            FSLog.d('Log d', 'tag: ' + tag + ', content: ' + content);
+            log.d('hook_log_D', `tag: ${tag}, content: ${content}`);
             return 0;
         };
         Log.v.overload('java.lang.String', 'java.lang.String').implementation = function (tag: string, content: string) {
-            FSLog.d('Log v', 'tag: ' + tag + ', content: ' + content);
+            log.d('hook_log_V', `tag: ${tag}, content: ${content}`);
             return 0;
         };
         Log.i.overload('java.lang.String', 'java.lang.String').implementation = function (tag: string, content: string) {
-            FSLog.d('Log i', 'tag: ' + tag + ', content: ' + content);
+            log.i('hook_log_I', `tag: ${tag}, content: ${content}`);
             return 0;
         };
         Log.w.overload('java.lang.String', 'java.lang.String').implementation = function (tag: string, content: string) {
-            FSLog.d('Log w', 'tag: ' + tag + ', content: ' + content);
+            log.w('hook_log_W', `tag: ${tag}, content: ${content}`);
             return 0;
         };
         Log.e.overload('java.lang.String', 'java.lang.String').implementation = function (tag: string, content: string) {
-            FSLog.d('Log e', 'tag: ' + tag + ', content: ' + content);
+            log.e('hook_log_E', `tag: ${tag}, content: ${content}`);
             return 0;
         };
         Log.wtf.overload('java.lang.String', 'java.lang.String').implementation = function (tag: string, content: string) {
-            FSLog.d('Log wtf', 'tag: ' + tag + ', content: ' + content);
+            log.w('hook_log_WTF', `tag: ${tag}, content: ${content}`);
             return 0;
         };
+
+        HookNLog();
+    }
+
+    function HookNLog() {
+        Interceptor.attach(Module.findExportByName(null, "__android_log_print")!, {
+            onEnter: function (args) {
+                log.d("HookNLog", args[1].readCString() + "\t" + args[2].readCString() + "\t" + args[3] + "\t" + args[4] + "\t" + args[5])
+            }
+        })
     }
 
     /**
@@ -318,7 +328,7 @@ export namespace Android {
                 try {
                     let cls = loader.loadClass(clsname);
                     if (null != cls) {
-                        FSLog.d(tag, "found cls: " + cls);
+                        log.d(tag, "found cls: " + cls);
 
                         let cf = Java.ClassFactory.get(loader);
 
@@ -327,11 +337,11 @@ export namespace Android {
                     }
 
                 } catch (e: any) {
-                    FSLog.e(tag, e.toString());
+                    log.e(tag, e.toString());
                 }
             },
             onComplete() {
-                FSLog.d(tag, 'completed .');
+                log.d(tag, 'completed .');
             }
         });
     }
@@ -364,12 +374,12 @@ export namespace Android {
 
             let result = gettimeofday(ptr_tz, ptr_tzp);
             if (result == 0) {
-                FSLog.d(tag, `hook gettimeofday: ${ptr_tz} ${ptr_tzp} ${result}`);
+                log.d(tag, `hook gettimeofday: ${ptr_tz} ${ptr_tzp} ${result}`);
                 // modify_time(ptr_tz, 0xAAAA, 0xBBBB);
                 let t = new Int32Array(ArrayBuffer.wrap(ptr_tz, 8));
                 t[0] = 0xAAAA;
                 t[1] = 0xBBBB;
-                FSLog.d(tag, hexdump(ptr_tz));
+                log.d(tag, hexdump(ptr_tz));
             }
             return result;
         }, "int", ["pointer", "pointer"]));
