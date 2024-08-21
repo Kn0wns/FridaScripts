@@ -34,9 +34,10 @@ function android() {
     // Bypass.bypass_ssl_UnpinningPlus();
     // Bypass.bypass_ssl_flutter()
 
-    // autoEncrypt()  // Android Java 加密自吐
-
-    // View.OnClickListener() // 监听点击事件
+    // 快速定位
+    FastPoint.hook()
+    FastPoint.hook_encrypt() // Android Java 加密自吐
+    View.OnClickListener() // 监听点击事件
 }
 
 

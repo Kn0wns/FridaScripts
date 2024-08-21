@@ -1,7 +1,7 @@
 /**
  * Java 层系统库加密自吐
  */
-export function autoEncrypt() {
+export function systemEncryptionLibrary() {
     Java.perform(function () {
         console.log('Start\n')
 
