@@ -49,6 +49,6 @@ clone 仓库后，在项目根目录创建 agent 目录（已加入 gitignore）
 ## Refs
 [GameSentry](https://www.freebuf.com/articles/others-articles/345771.html) | [仓库地址](https://github.com/GrowthEase/GameSentry) 需要修改 frida 版本 `"frida": "^14.2.8"` 此版本 `npm install` 环境总出问题
 
-[Il2CppHookScripts runtime hook](https://github.com/axhlzy/Il2CppHookScripts/blob/ts/README.zh-CN.md) `qbdi`
+[Il2CppHookScripts runtime hook](https://github.com/axhlzy/Il2CppHookScripts/blob/ts/README.zh-CN.md) `qbdi` 添加到项目会出问题 暂时没找到原因
 
 [frida-il2cpp-bridge](https://github.com/vfsfitvnm/frida-il2cpp-bridge)
