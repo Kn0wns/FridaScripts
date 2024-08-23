@@ -40,10 +40,15 @@ IDE：Pycharm、WebStorm、 VSCcode （其他 IDE 也一样）
 
 clone 仓库后，在项目根目录创建 agent 目录（已加入 gitignore）在这里开发业务脚本
 
-修改 index.ts 引入 agent 目录下的类
+修改 main.ts 引入 agent 目录下的类
 
 单开一个 shell 跑 npm run watch 实时编译脚本
 
 不断修改 index 或 agent 的脚本，注入、测试，达到目的
 
 ## Refs
+[GameSentry](https://www.freebuf.com/articles/others-articles/345771.html) | [仓库地址](https://github.com/GrowthEase/GameSentry) 需要修改 frida 版本 `"frida": "^14.2.8"` 此版本 `npm install` 环境总出问题
+
+[Il2CppHookScripts runtime hook](https://github.com/axhlzy/Il2CppHookScripts/blob/ts/README.zh-CN.md) `qbdi`
+
+[frida-il2cpp-bridge](https://github.com/vfsfitvnm/frida-il2cpp-bridge)

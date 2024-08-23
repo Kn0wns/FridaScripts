@@ -10,7 +10,7 @@ export namespace FastPoint {
         JSONObject();
         JString();
         base64();
-        StringBuffer();
+        // StringBuffer();  // 需要修复重载问题
         SQLLite();
         // ArrayList();  // keyword
         // HashMap();
@@ -80,6 +80,41 @@ export namespace FastPoint {
     }
 
     function StringBuffer() {
+        /* 有重载
+        Error: append(): has more than one overload, use .overload(<signature>) to choose from:
+        .overload('char')
+        .overload('double')
+        .overload('float')
+        .overload('int')
+        .overload('long')
+        .overload('java.lang.AbstractStringBuilder')
+        .overload('java.lang.CharSequence')
+        .overload('java.lang.Object')
+        .overload('java.lang.String')
+        .overload('java.lang.StringBuffer')
+        .overload('boolean')
+        .overload('[C')
+        .overload('char')
+        .overload('java.lang.CharSequence')
+        .overload('char')
+        .overload('double')
+        .overload('float')
+        .overload('int')
+        .overload('long')
+        .overload('java.lang.AbstractStringBuilder')
+        .overload('java.lang.CharSequence')
+        .overload('java.lang.Object')
+        .overload('java.lang.String')
+        .overload('java.lang.StringBuffer')
+        .overload('boolean')
+        .overload('[C')
+        .overload('java.lang.CharSequence', 'int', 'int')
+        .overload('[C', 'int', 'int')
+        .overload('java.lang.CharSequence', 'int', 'int')
+        .overload('java.lang.CharSequence', 'int', 'int')
+        .overload('[C', 'int', 'int')
+*/
+
         let StringBuffer = Java.use("java.lang.StringBuffer");
         let StringBuilder = Java.use("java.lang.StringBuilder");
         StringBuffer.append.implementation = function (append_str: string) {

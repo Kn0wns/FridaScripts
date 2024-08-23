@@ -22,7 +22,7 @@ function watch(obj, mtdName) {
     let tag = watch.name
     let listener_name = getObjClassName(obj);
     let target = Java.use(listener_name);
-    if (!target || !mtdName in target) {
+    if (!target || !(mtdName in target)) {
         return;
     }
     target[mtdName].overloads.forEach(function (overload) {

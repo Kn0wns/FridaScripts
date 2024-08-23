@@ -85,4 +85,58 @@ export namespace Utils {
     export const showNativeStacksFUZZY = (context: CpuContext) => {
         log.d('showNativeStacks', '\tBacktrace:\n\t' + Thread.backtrace(context, Backtracer.FUZZY).map(DebugSymbol.fromAddress).join('\n\t'));
     }
+
+    /**
+     * 获取当前进程名称
+     * @private
+     */
+    export const getSelfProcessName = () => {
+        const openPtr = Module.getExportByName('libc.so', 'open');
+        const open = new NativeFunction(openPtr, 'int', ['pointer', 'int']);
+
+        const readPtr = Module.getExportByName("libc.so", "read");
+        const read = new NativeFunction(readPtr, "int", ["int", "pointer", "int"]);
+
+        const closePtr = Module.getExportByName('libc.so', 'close');
+        const close = new NativeFunction(closePtr, 'int', ['int']);
+
+        const path = Memory.allocUtf8String("/proc/self/cmdline");
+        const fd = open(path, 0);
+        if (fd != -1) {
+            const buffer = Memory.alloc(0x1000);
+            const result = ptr(read(fd, buffer, 0x1000)).readCString();
+            close(fd);
+            return result;
+        }
+        log.e('getSelfProcessName', "获取进程名失败！")
+        return "";
+    }
+
+    /**
+     * 获取当前进程包名
+     */
+    export const getPkgName = () => {
+        let retStr = ""
+        Java.perform(() => retStr = getApplicationContext().getPackageName())
+        return retStr
+    }
+
+    export function getThreadName(tid: number = Process.id) {
+        let threadName: string = "unknown"
+        try {
+            var file = new File("/proc/self/task/" + tid + "/comm", "r")
+            threadName = file.readLine().toString().trimEnd()
+            file.close()
+        } catch (e) {
+            throw e
+        }
+
+        // var threadNamePtr: NativePointer = Memory.alloc(0x40)
+        // var tid_p: NativePointer = Memory.alloc(p_size).writePointer(ptr(tid))
+        // var pthread_getname_np = new NativeFunction(Module.findExportByName("libc.so", 'pthread_getname_np')!, 'int', ['pointer', 'pointer', 'int'])
+        // pthread_getname_np(ptr(tid), threadNamePtr, 0x40)
+        // threadName = threadNamePtr.readCString()!
+
+        return threadName
+    }
 }
