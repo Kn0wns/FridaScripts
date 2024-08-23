@@ -1,20 +1,13 @@
 {
-  "name": "fridascript",
-  "version": "1.0.0",
-  "description": "frida模块化",
-  "main": "index.js",
   "scripts": {
-    "prepare": "npm run build",
-    "build": "frida-compile Src/index.ts -o hook.js -c",
-    "watch": "frida-compile Src/index.ts -o hook.js -w"
+    "build": "esbuild --bundle --outfile=hook.js src/main.ts",
+    "build_minify": "esbuild --bundle --minify --outfile=hook.js src/main.ts",
+    "watch": "npm run build_minify -- --watch",
+    "hook_example": "frida -Ul hook.js -f com.example.app"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "@types/frida-gum": "^18.4.0",
-    "@types/node": "^14.14.2",
-    "frida-compile": "^10.0.0",
-    "ts-transformer-inline-file": "^0.2.0"
+    "esbuild": "^0.23.1",
+    "frida-il2cpp-bridge": "^0.9.0"
   }
 }

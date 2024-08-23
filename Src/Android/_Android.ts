@@ -14,6 +14,7 @@ export namespace Android {
         for (const fn of methodNames) {
             fn && Java.perform(() => {
                 Java.use(clzName)[fn].implementation = function () {
+                    // @ts-ignore
                     const ret = this[fn](...arguments);
                     log.formatArguments(arguments, ret, clzName, fn, isShowStacks, null) // 打印参数/返回值
                     return ret
@@ -40,8 +41,9 @@ export namespace Android {
             }
         })
 
+        // @ts-ignore
         const ret = instance[methodName](...params);
-        log.d(callMethod.name, `[>>>] call.${methodName}: ${ret}`)
+        log.d("callMethod", `[>>>] call.${methodName}: ${ret}`)
     }
 
     /**
@@ -52,11 +54,11 @@ export namespace Android {
         let ret: Java.Wrapper<{}>;
         Java.choose(className, { // 获取类字节码
             onMatch(obj) {
-                log.d(findInstance.name, `查找实例:${obj}`)
+                log.d("findInstance", `查找实例:${obj}`)
                 ret = obj
             },
             onComplete() {
-                if (!ret) log.w(findInstance.name, `内存中所有对象搜索完毕`)
+                if (!ret) log.w("findInstance", `内存中所有对象搜索完毕`)
             }
         });
         // @ts-ignore
@@ -72,21 +74,21 @@ export namespace Android {
             Utils.showStacks()
             const result = this.getBytes();
             const newStr = str.$new(result);
-            log.d(hook_string.name, `str.getBytes result => ${newStr}`)
+            log.d("hook_string", `str.getBytes result => ${newStr}`)
             return result;
         }
         str.getBytes.overload('java.lang.String').implementation = function (a: any) {
             Utils.showStacks()
             const result = this.getBytes(a);
             const newStr = str.$new(result, a);
-            log.d(hook_string.name, `str.getBytes result => ${newStr}`)
+            log.d("hook_string", `str.getBytes result => ${newStr}`)
             return result;
         }
 
         const artSyms = Process.getModuleByName('libart.so').enumerateSymbols();
         let NewStringUTFAddr = null
         for (const artSym of artSyms) {
-            if (artSym.name.indexOf("CheckJNI") === -1 && artSym.name.indexOf("NewStringUTF") !== -1) {
+            if ("artSym".indexOf("CheckJNI") === -1 && "artSym".indexOf("NewStringUTF") !== -1) {
                 NewStringUTFAddr = artSym.address;
             }
         }
@@ -107,14 +109,14 @@ export namespace Android {
         const artSyms = Process.getModuleByName('libart.so').enumerateSymbols();
         let jniFuncAddress = null
         for (const artSym of artSyms) {
-            if (artSym.name.indexOf("CheckJNI") === -1 && artSym.name.indexOf(jniFuncName) !== -1) {
+            if ("artSym".indexOf("CheckJNI") === -1 && "artSym".indexOf(jniFuncName) !== -1) {
                 jniFuncAddress = artSym.address;
             }
         }
 
         jniFuncAddress && Interceptor.attach(jniFuncAddress, {
             onEnter: function (args) {
-                log.d(ART.name, `hookART: ${args[1].readCString()}`)
+                log.d("ART", `hookART: ${args[1].readCString()}`)
                 Utils.showStacksACCURATE(this.context);
             }
         });
@@ -129,11 +131,12 @@ export namespace Android {
      * @return null
      */
     export const hook_All_overloads = (className: string, methodName: string) => {
-        let tag = hook_All_overloads.name
+        let tag = "hook_All_overloads"
         let clz = Java.use(className);
         let overloadsArr = clz[methodName].overloads;
         for (const overloadsArrElement of overloadsArr) {
             overloadsArrElement.implementation = function () {          // hook 方法
+                // @ts-ignore
                 let ret = this[methodName](...arguments) // apply 跟call 同理 不同的是apply接收数组类型参数
                 log.formatArguments(arguments, ret, className, methodName, null, null) // 打印参数/返回值
                 return ret
@@ -173,7 +176,8 @@ export namespace Android {
         Interceptor.attach(dlopenAddress, {
             onEnter: function (args) {
                 const name = args[0].readCString();  // 输出so路径
-                this.hook = name?.includes(soName)
+                // @ts-ignore
+                this.hook = name.includes(soName)
             }, onLeave: function (retval) {
                 this.hook && callback();
             }
@@ -322,7 +326,7 @@ export namespace Android {
      * @param callback {any} 回调方法
      */
     export function enumerateClassLoadersAndUse(clsname: string, callback: any) {
-        const tag = enumerateClassLoadersAndUse.name
+        const tag = "enumerateClassLoadersAndUse"
         Java.enumerateClassLoaders({
             onMatch(loader) {
                 try {
@@ -352,7 +356,7 @@ export namespace Android {
      * [算法还原的助手(一) 先让时间停下来 - 固定 So 层时间戳：lrand48 与 gettimeofday](https://zhuanlan.zhihu.com/p/322153629)
      */
     export function hook_gettimeofday() {
-        let tag = hook_gettimeofday.name
+        let tag = "hook_gettimeofday"
         let addr_gettimeofday: any = Module.findExportByName(null, "gettimeofday");
         let gettimeofday = new NativeFunction(addr_gettimeofday, "int", ["pointer", "pointer"]);
 
