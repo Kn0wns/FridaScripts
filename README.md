@@ -5,21 +5,21 @@
 
 > 核心原理：在 hook 代码里写直接引用文件无法使用，所以这里是通过 `frida-compile` 把 `TypeScript` 编译集成到一个 `js` 代码中。实现 `ts`、`js`混写，文件内容更改，即时编译注入
 
-## 如何编译
+## 编译
 ```shell
-$ git clone git clone https://github.com/loadkk/FridaScripts.git
-$ cd FridaScripts\
-$ npm install
+$ git clone git clone https://github.com/loadkk/FridaScripts.git && cd FridaScripts && npm i
+
+# 注入
 $ frida -UFl hook.js
 
-## 实时编译
+# 实时编译
 $ npm run watch
 
-## 手动编译
+# 手动编译
 $ npm run build
 ```
 
-## 如何调试
+## 调试
 [FRIDA 调试环境搭建](https://www.52pojie.cn/thread-1363328-1-1.html)
 ```
 $ npm run watch
@@ -34,17 +34,6 @@ Chrome Inspector server listening on port 9229
 如果命中未断点可以回到 `chrome://inspect` 选择 `Configure...` 启用转发 `Enable port forwarding`
 
 重复上面操作即可实现断点调试
-
-## 推荐姿势
-IDE：Pycharm、WebStorm、 VSCcode （其他 IDE 也一样）
-
-clone 仓库后，在项目根目录创建 agent 目录（已加入 gitignore）在这里开发业务脚本
-
-修改 main.ts 引入 agent 目录下的类
-
-单开一个 shell 跑 npm run watch 实时编译脚本
-
-不断修改 index 或 agent 的脚本，注入、测试，达到目的
 
 ## Refs
 [GameSentry](https://www.freebuf.com/articles/others-articles/345771.html) | [仓库地址](https://github.com/GrowthEase/GameSentry) 需要修改 frida 版本 `"frida": "^14.2.8"` 此版本 `npm install` 环境总出问题
