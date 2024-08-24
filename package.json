@@ -3,6 +3,9 @@
     "build": "esbuild --bundle --outfile=hook.js src/main.ts",
     "build_minify": "esbuild --bundle --minify --outfile=hook.js src/main.ts",
     "watch": "npm run build_minify -- --watch",
+    "hook": "frida -Ul hook.js -f com.xqc.sdklink",
+    "hook_o": "frida -Ul hook.js -f com.xqc.sdklink -o 1.tx",
+    "frida": "adb shell su -c ./data/local/tmp/fs",
     "hook_example": "frida -Ul hook.js -f com.example.app"
   },
   "dependencies": {

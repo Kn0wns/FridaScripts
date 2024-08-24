@@ -1,14 +1,13 @@
 import {FSLog} from "./FSLogger";
 import * as exports_Android from "./Android/__exports";
 import * as exports_IOS from "./IOS/__exports";
-import {Game} from './Game';
+import * as Game from './Game';
 
-// import "frida-il2cpp-bridge"
-import "il2cpp-hooker"  // 解析会出错
+import "frida-il2cpp-bridge"
 
 (() => {
-    Java.available && setImmediate(android)
-    ObjC.available && setImmediate(ios)
+    // Java.available && setImmediate(android)
+    // ObjC.available && setImmediate(ios)
 
     Java.available && setImmediate(unity)
 })()
@@ -80,12 +79,5 @@ function ios() {
 }
 
 function unity() {
-    Il2Cpp.perform(() => {
-        console.log(Il2Cpp.unityVersion);
-        // Il2Cpp.dump(); // 默认目录路径和文件名: /<default_path>/<default_name>.cs
-        // Il2Cpp.dump("custom_file_name"); // 指定文件名: /<default_path>/custom_file_name.cs
-        // Il2Cpp.dump("custom_file_name", "/i/can/write/to/this/path"); // 指定文件名和路径: /i/can/write/to/this/path/custom_file_name.cs
-    })
-
     Game.yxz()
 }

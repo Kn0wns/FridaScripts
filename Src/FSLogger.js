@@ -1,29 +1,26 @@
 import {banner_android, banner_ios} from "./banner";
 import {FSTools} from "./FSTools";
 
-export class FSLog {
-    static bDebug = true;  // 管理输出信息
-    static threadName = '';
-
-    private static dateFormat2(date: Date) {
+export let FSLog = {
+    bDebug: true,  // 管理输出信息
+    threadName: '',
+    dateFormat2(date) {
         return date.toLocaleString('zh-CN');
-    }
-
-    private static getThreadName() {
-        if (!this.threadName && Java.available) {
+    },
+    getThreadName() {
+        if (!FSLog.threadName && Java.available) {
             Java.perform(() => {
                 const Thread = Java.use('java.lang.Thread');
-                this.threadName = `[${Thread.currentThread().getName()}]`;
+                FSLog.threadName = `[${Thread.currentThread().getName()}]`;
             });
         }
-        return this.threadName
-    }
-
-    private static dateFormat(date: Date): string {
-        let hour: string | number = date.getHours();
-        let minute: string | number = date.getMinutes();
-        let second: string | number = date.getSeconds();
-        let mSecond: string | number = date.getMilliseconds();
+        return FSLog.threadName
+    },
+    dateFormat(date) {
+        let hour = date.getHours();
+        let minute = date.getMinutes();
+        let second = date.getSeconds();
+        let mSecond = date.getMilliseconds();
 
         hour = hour < 10 ? "0" + hour : hour;
         minute = minute < 10 ? "0" + minute : minute;
@@ -32,9 +29,8 @@ export class FSLog {
 
         // return `${hour}:${minute}:${second}`;
         return `${date.toLocaleDateString()} ${hour}:${minute}:${second}`;
-    }
-
-    private static log(logFunc: (message?: any, ...optionalParams: any[]) => void, level: string, tag: string, content: any) {
+    },
+    log(logFunc, level, tag, content) {
         // logFunc(`[${level}][${SSLog.dateFormat(new Date())}][PID:${Process.id}]${""}[${Process.getCurrentThreadId()}][${tag}]: ${content}`);
         let emoji = ``
         switch (level) {
@@ -54,32 +50,23 @@ export class FSLog {
                 emoji = `❓`
                 break;
         }
-        // logFunc(`[${level}][${this.dateFormat2(new Date())}][PID:${Process.id}]${this.threadName}[${Process.getCurrentThreadId()}][${tag}] ${emoji} ${content}`);
-        logFunc(`[${level}][${this.dateFormat(new Date())}][PID:${Process.id}]${this.threadName}[${Process.getCurrentThreadId()}][${tag}] ${emoji} ${content}`);
-    }
+        // logFunc(`[${level}][${FSLog.dateFormat2(new Date())}][PID:${Process.id}]${FSLog.threadName}[${Process.getCurrentThreadId()}][${tag}] ${emoji} ${content}`);
+        logFunc(`[${level}][${FSLog.dateFormat(new Date())}][PID:${Process.id}]${FSLog.threadName}[${Process.getCurrentThreadId()}][${tag ? tag : 'tag'}] ${emoji} ${content ? content : tag}`);
+    },
 
 
-    static d(tag: string, content: any) {
-        if (!this.threadName) this.getThreadName()
+    d(tag, content) {
+        if (!FSLog.threadName) FSLog.getThreadName()
 
-        if (this.bDebug) {
-            this.log(console.log, 'DEBUG', tag, content);
+        if (FSLog.bDebug) {
+            FSLog.log(console.log, 'DEBUG', tag, content);
         }
-    }
+    },
+    i: (tag, content) => FSLog.log(console.log, 'INFO', tag, content),
+    w: (tag, content) => FSLog.log(console.warn, 'WARN', tag, content),
+    e: (tag, content) => FSLog.log(console.error, 'ERROR', tag, content),
 
-    static i(tag: string, content: any) {
-        this.log(console.log, 'INFO', tag, content);
-    }
-
-    static w(tag: string, content: any) {
-        this.log(console.warn, 'WARN', tag, content);
-    }
-
-    static e(tag: string, content: any) {
-        this.log(console.error, 'ERROR', tag, content);
-    }
-
-    static send(tag: string, content: any) {
+    send(tag, content) {
         let tid = Process.getCurrentThreadId();
         send(JSON.stringify({
             tid: tid,
@@ -87,7 +74,7 @@ export class FSLog {
             tag: tag,
             content: content
         }));
-    }
+    },
 
     /**
      * 格式化输出 java hook 的参数 or 返回值
@@ -98,7 +85,7 @@ export class FSLog {
      * @param isShowStacks {boolean} 是否显示调用栈
      * @param len {number} 长度
      */
-    static formatArguments(args: IArguments, ret: any, clzName: string, methodName: string, isShowStacks: boolean | null, len: number | null) {
+    formatArguments(args, ret, clzName, methodName, isShowStacks, len) {
         isShowStacks && FSTools.showStacks();
         const LEN = len || 20;
         const Call = `${clzName}.${methodName}`.padEnd(LEN, " ");
@@ -111,13 +98,8 @@ export class FSLog {
         const result = `${methodName}_result`.padEnd(LEN, " ");
         console.log(`[<<<] ${result} :=>  ${ret}`);
         console.log(`-`.padEnd(LEN * 2, `-`));
-    }
+    },
 
-    static android(){
-        this.w("MAIN", banner_android);
-    }
-
-    static ios() {
-        this.w("MAIN", banner_ios)
-    }
+    android: () => FSLog.w("MAIN", banner_android),
+    ios: () => FSLog.w("MAIN", banner_ios),
 }
