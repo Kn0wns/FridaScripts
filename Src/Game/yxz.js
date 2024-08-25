@@ -68,18 +68,6 @@ public MemoryStream Unpack(object message, uint sessionId) {
 // 因此，最小占用大小为12字节（预留空间），加上实际消息数据的大小。最大占用大小为1MB + 12字节
  */
 
-function arrayToBuffer(array) {
-    // 创建一个与数组相同大小的 ArrayBuffer
-    const buffer = new ArrayBuffer(array.length);
-    // 创建一个 Uint8Array 视图来填充 ArrayBuffer
-    const view = new Uint8Array(buffer);
-    // 将原始数组的内容复制到 ArrayBuffer
-    for (let i = 0; i < array.length; i++) {
-        view[i] = array[i];
-    }
-    return buffer;
-}
-
 function unpack(bytes) {
     let memoryStream = new DataView(bytes);
     let sessionId = memoryStream.getUint32(0, true);  // 小端字节序
@@ -88,18 +76,23 @@ function unpack(bytes) {
     return {"sessionId": sessionId, "msgLen": msgLen, "OpCode": OpCode};
 }
 
+
+function pbBuf(bytes, pack) {
+    let PbBuff = ptr(bytes.elements).add(12).readByteArray(pack.msgLen);  // 去除12字节的标识头
+    return Array.from(new Uint8Array(PbBuff)).map(byte => ('00' + byte.toString(16)).slice(-2)).join('');  // 转换为16进制字符串
+}
+
 function send() {
     let KcpNetworkChannel = Il2Cpp.domain.assembly("Game.Runtime").image.class("Sining.KcpNetworkChannel")
     let send = KcpNetworkChannel.method("Send"); // System.Void Send(System.IO.MemoryStream memoryStream); // 0x015a33a8"
     // log.d("send", `${send} ${send.virtualAddress}`)
     send.implementation = function (memoryStream) {
-        const bytes = memoryStream.method("ToArray", 0).invoke();  // System.Byte[] ToArray();
-        // 不知道怎么解了 暂时当成字符串处理
-        let s = bytes.toString().replace('[', "").replace(']', '').split(',')
-        let pack = unpack(arrayToBuffer(s));
-        log.w(`send`, `发包字节 ${hexdump(bytes.elements, {length: bytes.length, header: false})}`)
-        log.i(`send`, `标识头 ${JSON.stringify(pack)} ${opcodeMapping[pack.OpCode]}`)
         this.method("Send").invoke(memoryStream)
+        let bytes = memoryStream.method("ToArray", 0).invoke();  // System.Byte[] ToArray();
+        let arrayBuffer = ptr(bytes.elements).readByteArray(bytes.length);
+        let pack = unpack(arrayBuffer);
+        let PbHex = pbBuf(bytes, pack);
+        log.i(`send`, `${JSON.stringify(pack)} ${opcodeMapping[pack.OpCode]} ${PbHex}`)
     }
 }
 
@@ -107,13 +100,12 @@ function recv() {
     let KCP = Il2Cpp.domain.assembly("Game.Runtime").image.class('Sining.KCP')
     let recv = KCP.method("ikcp_recv")  // System.Int32 ikcp_recv(System.IntPtr kcp, System.Byte[] buffer, System.Int32 len);  // 0x0159fdb4
     // let recv = KCP.method("KcpRecv")  // static System.Int32 KcpRecv(System.IntPtr kcp, System.Byte[] buffer, System.Int32 len);
-    recv.implementation = function (kcp, buffer, len) {
-        this.method("ikcp_recv").invoke(kcp, buffer, len)
-        // this.method("KcpRecv").invoke(kcp, buffer, len)
-        let s = buffer.toString().replace('[', "").replace(']', '').split(',')
-        let pack = unpack(arrayToBuffer(s));
-        log.i(`recv`, `标识头 ${JSON.stringify(pack)} ${opcodeMapping[pack.OpCode]}`)
-        log.w(`recv`, `收包字节 ${hexdump(buffer.elements, {length: len, header: false})}`)
+    recv.implementation = function (kcp, bytes, len) {
+        this.method("ikcp_recv").invoke(kcp, bytes, len)
+        let arrayBuffer = ptr(bytes.elements).readByteArray(bytes.length);
+        let pack = unpack(arrayBuffer);
+        let PbHex = pbBuf(bytes, pack);
+        log.i(`recv`, `${JSON.stringify(pack)} ${opcodeMapping[pack.OpCode]} ${PbHex}`)
     }
 }
 
@@ -125,7 +117,7 @@ function main() {
         unity_log();
         // Il2Cpp.dump();
         // hotfixDump();
-        // send();
+        send();
         recv();
     })
 }
