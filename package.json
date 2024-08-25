@@ -6,6 +6,7 @@
     "hook": "frida -Ul hook.js -f com.xqc.sdklink",
     "hook_o": "frida -Ul hook.js -f com.xqc.sdklink -o 1.tx",
     "frida": "adb shell su -c ./data/local/tmp/fs",
+    "frida_stop": "adb shell su -c pkill -9 fs",
     "hook_example": "frida -Ul hook.js -f com.example.app"
   },
   "dependencies": {
