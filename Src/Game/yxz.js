@@ -98,14 +98,13 @@ function send() {
 
 function recv() {
     let KCP = Il2Cpp.domain.assembly("Game.Runtime").image.class('Sining.KCP')
-    let recv = KCP.method("ikcp_recv")  // System.Int32 ikcp_recv(System.IntPtr kcp, System.Byte[] buffer, System.Int32 len);  // 0x0159fdb4
-    // let recv = KCP.method("KcpRecv")  // static System.Int32 KcpRecv(System.IntPtr kcp, System.Byte[] buffer, System.Int32 len);
+    let recv = KCP.method("ikcp_recv")
     recv.implementation = function (kcp, bytes, len) {
-        this.method("ikcp_recv").invoke(kcp, bytes, len)
         let arrayBuffer = ptr(bytes.elements).readByteArray(bytes.length);
         let pack = unpack(arrayBuffer);
         let PbHex = pbBuf(bytes, pack);
         log.i(`recv`, `${JSON.stringify(pack)} ${opcodeMapping[pack.OpCode]} ${PbHex}`)
+        return this.method("ikcp_recv").invoke(kcp, bytes, len)
     }
 }
 
