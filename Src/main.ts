@@ -9,7 +9,8 @@ import "frida-il2cpp-bridge"
     // Java.available && setImmediate(android)
     // ObjC.available && setImmediate(ios)
 
-    Java.available && setImmediate(unity)
+    // Java.available && setImmediate(unity)
+    unity()
 })()
 
 function android() {
@@ -79,5 +80,6 @@ function ios() {
 }
 
 function unity() {
-    Game.yxz()
+    // Game.yxz()
+    Game.xjskp()
 }
